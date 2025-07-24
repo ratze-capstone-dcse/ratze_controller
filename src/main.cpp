@@ -1,22 +1,37 @@
 #include <Arduino.h>
-#include <bno055.h>
+// #include <bno055.h>
+// #include <bno055-new.h>
+#include <bno055-heading.h>
+#include <BNO055_support.h> 
 
 void printUSB() {
   // Serial.println("Hello, USB!");
   Serial.print("Current millis: ");
   Serial.print(millis());
-  Serial.print(" Roll: ");
-  Serial.print(roll);
-  Serial.print(" Pitch: ");
-  Serial.print(pitch);
-  Serial.print(" Yaw: ");
-  Serial.print(yaw);
-  Serial.print(" Gyro X: ");
-  Serial.print(gxrs);
-  Serial.print(" Gyro Y: ");
-  Serial.print(gyrs);
-  Serial.print(" Gyro Z: ");
-  Serial.print(gzrs);
+  // Serial.print(" Roll: ");
+  // Serial.print(roll);
+  // Serial.print(" Pitch: ");
+  // Serial.print(pitch);
+  // Serial.print(" Yaw: ");
+  // Serial.print(yaw);
+  // Serial.print(" Heading: ");
+  // Serial.print(heading);
+  Serial.print("  Heading: ");
+  Serial.print(corrected_heading, 2);
+  Serial.print(" | Kalibrasi (SYS-G-A-M): ");
+  Serial.print(sys_calib);
+  Serial.print("-");
+  Serial.print(gyro_calib);
+  Serial.print("-");
+  Serial.print(accel_calib);
+  Serial.print("-");
+  Serial.println(mag_calib);
+  // Serial.print(" Gyro X: ");
+  // Serial.print(gxrs);
+  // Serial.print(" Gyro Y: ");
+  // Serial.print(gyrs);
+  // Serial.print(" Gyro Z: ");
+  // Serial.print(gzrs);
   // Serial.print(" Vertical Velocity: ");
   // Serial.println(vertical_velocity);
   // Serial.print(" Roll Error: ");
@@ -27,21 +42,22 @@ void printUSB() {
   // Serial.println(yaw_sp);
   // Serial.print("Last Yaw: ");
   // Serial.println(last_yaw);
-  Serial.print(" Acceleration Z: ");
-  Serial.println(accelData.z);
+  // Serial.print(" Acceleration Z: ");
+  // Serial.println(accelData.z);
 }
 
 
 
 void setup() {
   Serial.begin(115200);
-  delay(100); // Pastikan serial siap
-  bno055_init(); // Inisialisasi sensor BNO055
+  delay(150); // Pastikan serial siap
+  init_imu(); // Inisialisasi sensor BNO055
   Serial.println("BNO055 initialized");
 }
 
 void loop() {
-  bno055_update();
+  // update_imu();
+  extract_heading(); // Baca heading dari sensor
   printUSB();
   delay(100);  // Delay for readability
 }
