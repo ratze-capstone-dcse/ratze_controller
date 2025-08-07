@@ -1,8 +1,5 @@
 #include <Arduino.h>
-// #include <bno055.h>
-// #include <bno055-new.h>
-#include <bno055-heading.h>
-#include <BNO055_support.h> 
+#include <firmware_control.h>
 
 void printUSB() {
   // Serial.println("Hello, USB!");
@@ -49,17 +46,22 @@ void printUSB() {
 
 
 void setup() {
-  Serial.begin(115200);
-  delay(150); // Pastikan serial siap
-  init_imu(); // Inisialisasi sensor BNO055
-  Serial.println("BNO055 initialized");
+  // Serial.begin(115200);
+  // delay(150); // Pastikan serial siap
+  // init_imu(); // Inisialisasi sensor BNO055
+  // Serial.println("BNO055 initialized");
+  setupFirmware();
+
 }
 
 void loop() {
-  // update_imu();
-  extract_heading(); // Baca heading dari sensor
-  printUSB();
-  delay(100);  // Delay for readability
+  // // update_imu();
+  // extract_heading(); // Baca heading dari sensor
+  // printUSB();
+  // delay(100);  // Delay for readability
+  loopFirmware();
+
+  
 }
 
 // // put function definitions here:
