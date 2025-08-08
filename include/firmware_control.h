@@ -24,8 +24,8 @@
 // Tof Setup
 #define TCA9548A_ADDR 0x70
 #define NUM_SENSORS 7
-Adafruit_VL53L0X tof_sensors[NUM_SENSORS];
-uint16_t tof_distances[NUM_SENSORS];
+// Adafruit_VL53L0X tof_sensors[NUM_SENSORS];
+// uint16_t tof_distances[NUM_SENSORS];
 
 // command processing variables
 char cmd_buffer[64];
@@ -66,6 +66,23 @@ void sendSensorData() {
     Serial.print(countM3); Serial.print(",");
     Serial.print(countM4); 
     Serial.println();
+}
+void setMotorSpeed(int speed){
+    if (speed <=0){
+        moveStop;
+        isMoving = false;
+        currentSpeed = 0;
+        return;
+    }
+    
+    // apply new speed while mantaining direction
+    analogWrite(EN_M1, speed);
+    analogWrite(EN_M2, speed);
+    analogWrite(EN_M3, speed);
+    analogWrite(EN_M4, speed);
+
+    currentSpeed = speed;
+    isMoving = true ;
 }
 
 void processCmd(){
@@ -120,24 +137,6 @@ void processCmd(){
             Serial.println(cmd_buffer);
             break;
     }
-}
-
-void setMotorSpeed(int speed){
-    if (speed <=0){
-        moveStop;
-        isMoving = false;
-        currentSpeed = 0;
-        return;
-    }
-    
-    // apply new speed while mantaining direction
-    analogWrite(EN_M1, speed);
-    analogWrite(EN_M2, speed);
-    analogWrite(EN_M3, speed);
-    analogWrite(EN_M4, speed);
-
-    currentSpeed = speed;
-    isMoving = true ;
 }
 
 // Setup function to be called from main.cpp
