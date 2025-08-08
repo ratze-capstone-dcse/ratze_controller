@@ -54,7 +54,7 @@ void updateToFReadings() {
     if (measure.RangeStatus != 4) {
       tof_distances[i] = measure.RangeMilliMeter;
     } else {
-      tof_distances[i] = 8000; // Out of range (8 meters)
+      Serial.println("Out of range");
     }
   }
 }
