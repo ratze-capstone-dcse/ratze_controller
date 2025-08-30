@@ -120,10 +120,6 @@ void processCmd(){
             setMotorSpeed(value);
             Serial.println("ACK:V");
             break;
-        case CMD_GET_SENSORS:
-            sendSensorData();
-            Serial.println("ACK:G");
-            break;
         case CMD_RESET_ENCODERS:
             resetEncoders();
             Serial.println("ACK:E");
@@ -171,6 +167,13 @@ void setupFirmware() {
 
 // Loop function to be called from main.cpp
 void loopFirmware() {
+  // print sensor data
+  if (millis() - last_cmd_time > 500) { // send data every 500ms
+    printToFReadings();
+    printEncoders();
+    last_cmd_time = millis();
+  }
+
   // Process any incoming commands
   while (Serial.available() > 0) {
     char c = Serial.read();
