@@ -11,19 +11,19 @@
 #define M4_IN1 33
 #define M4_IN2 32
 
-#define EN_M1 18
-#define EN_M2 19
-#define EN_M3 22
-#define EN_M4 21
+#define EN_M1 5
+#define EN_M2 18
+#define EN_M3 19
+#define EN_M4 23
 
-#define ENC_M1_A 34
-#define ENC_M1_B 35
-#define ENC_M2_A 4
-#define ENC_M2_B 15
-#define ENC_M3_A 16
-#define ENC_M3_B 17
-#define ENC_M4_A 5
-#define ENC_M4_B 18
+#define ENC_M1_A 16
+#define ENC_M1_B 17
+#define ENC_M2_A 36
+#define ENC_M2_B 39
+#define ENC_M3_A 4
+#define ENC_M3_B 15
+#define ENC_M4_A 34
+#define ENC_M4_B 35
 
 #define MAX_SPEED 255
 #define STEP_DELAY 5    
@@ -86,15 +86,15 @@ void setMotorDirection(bool forward) {
 void setTurnLeft() {
   digitalWrite(M1_IN1, LOW);  digitalWrite(M1_IN2, HIGH);
   digitalWrite(M2_IN1, HIGH); digitalWrite(M2_IN2, LOW);
-  digitalWrite(M3_IN1, LOW);  digitalWrite(M3_IN2, HIGH);
-  digitalWrite(M4_IN1, HIGH); digitalWrite(M4_IN2, LOW);
+  digitalWrite(M3_IN1, HIGH);  digitalWrite(M3_IN2, HIGH);
+  digitalWrite(M4_IN1, LOW); digitalWrite(M4_IN2, LOW);
 }
 
 void setTurnRight() {
   digitalWrite(M1_IN1, HIGH); digitalWrite(M1_IN2, LOW);
   digitalWrite(M2_IN1, LOW);  digitalWrite(M2_IN2, HIGH);
-  digitalWrite(M3_IN1, HIGH); digitalWrite(M3_IN2, LOW);
-  digitalWrite(M4_IN1, LOW);  digitalWrite(M4_IN2, HIGH);
+  digitalWrite(M3_IN1, LOW); digitalWrite(M3_IN2, LOW);
+  digitalWrite(M4_IN1, HIGH);  digitalWrite(M4_IN2, HIGH);
 }
 
 void accelerateTo(int targetSpeed) {
