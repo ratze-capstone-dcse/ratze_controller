@@ -2,28 +2,28 @@
 #include <Arduino.h>
 
 // Motor pin definitions
-#define M1_IN1 13
-#define M1_IN2 12
-#define M2_IN1 14
-#define M2_IN2 27
-#define M3_IN1 26
-#define M3_IN2 25
-#define M4_IN1 33
-#define M4_IN2 32
+#define M1_IN1 26 //26
+#define M1_IN2 25 //25
+#define M2_IN1 33 //33
+#define M2_IN2 32 //32
+#define M3_IN1 13 //13
+#define M3_IN2 12 //12
+#define M4_IN1 14 //14
+#define M4_IN2 27 //27
 
-#define EN_M1 5
-#define EN_M2 18
-#define EN_M3 19
-#define EN_M4 23
+#define EN_M1 23
+#define EN_M2 19
+#define EN_M3 18
+#define EN_M4 5
 
-#define ENC_M1_A 16
-#define ENC_M1_B 17
-#define ENC_M2_A 36
-#define ENC_M2_B 39
-#define ENC_M3_A 4
-#define ENC_M3_B 15
-#define ENC_M4_A 34
-#define ENC_M4_B 35
+#define ENC_M1_A 4 
+#define ENC_M1_B 15
+#define ENC_M2_A 34
+#define ENC_M2_B 35
+#define ENC_M3_A 36
+#define ENC_M3_B 39
+#define ENC_M4_A 17
+#define ENC_M4_B 16
 
 #define MAX_SPEED 255
 #define STEP_DELAY 5    
@@ -86,15 +86,15 @@ void setMotorDirection(bool forward) {
 void setTurnLeft() {
   digitalWrite(M1_IN1, LOW);  digitalWrite(M1_IN2, HIGH);
   digitalWrite(M2_IN1, HIGH); digitalWrite(M2_IN2, LOW);
-  digitalWrite(M3_IN1, HIGH);  digitalWrite(M3_IN2, HIGH);
-  digitalWrite(M4_IN1, LOW); digitalWrite(M4_IN2, LOW);
+  digitalWrite(M3_IN1, LOW);  digitalWrite(M3_IN2, HIGH);
+  digitalWrite(M4_IN1, HIGH); digitalWrite(M4_IN2, LOW);
 }
 
 void setTurnRight() {
   digitalWrite(M1_IN1, HIGH); digitalWrite(M1_IN2, LOW);
   digitalWrite(M2_IN1, LOW);  digitalWrite(M2_IN2, HIGH);
-  digitalWrite(M3_IN1, LOW); digitalWrite(M3_IN2, LOW);
-  digitalWrite(M4_IN1, HIGH);  digitalWrite(M4_IN2, HIGH);
+  digitalWrite(M3_IN1, HIGH); digitalWrite(M3_IN2, LOW);
+  digitalWrite(M4_IN1, LOW);  digitalWrite(M4_IN2, HIGH);
 }
 
 void accelerateTo(int targetSpeed) {
@@ -120,8 +120,8 @@ void decelerateFrom(int startSpeed) {
 void moveForward(int speed) {
   digitalWrite(M1_IN1, HIGH); digitalWrite(M1_IN2, LOW);
   digitalWrite(M2_IN1, HIGH); digitalWrite(M2_IN2, LOW);
-  digitalWrite(M3_IN1, HIGH); digitalWrite(M3_IN2, LOW);
-  digitalWrite(M4_IN1, HIGH); digitalWrite(M4_IN2, LOW);
+  digitalWrite(M3_IN1, LOW); digitalWrite(M3_IN2, HIGH);
+  digitalWrite(M4_IN1, LOW); digitalWrite(M4_IN2, HIGH);
   
   analogWrite(EN_M1, speed);
   analogWrite(EN_M2, speed);
@@ -132,8 +132,8 @@ void moveForward(int speed) {
 void moveBackward(int speed) {
   digitalWrite(M1_IN1, LOW); digitalWrite(M1_IN2, HIGH);
   digitalWrite(M2_IN1, LOW); digitalWrite(M2_IN2, HIGH);
-  digitalWrite(M3_IN1, LOW); digitalWrite(M3_IN2, HIGH);
-  digitalWrite(M4_IN1, LOW); digitalWrite(M4_IN2, HIGH);
+  digitalWrite(M3_IN1, HIGH); digitalWrite(M3_IN2, LOW);
+  digitalWrite(M4_IN1, HIGH); digitalWrite(M4_IN2, LOW);
   
   analogWrite(EN_M1, speed);
   analogWrite(EN_M2, speed);
@@ -158,6 +158,11 @@ void turnRight(int speed) {
 }
 
 void moveStop() {
+
+  digitalWrite(M1_IN1, LOW); digitalWrite(M1_IN2, LOW);
+  digitalWrite(M2_IN1, LOW); digitalWrite(M2_IN2, LOW);
+  digitalWrite(M3_IN1, LOW); digitalWrite(M3_IN2, LOW);
+  digitalWrite(M4_IN1, LOW); digitalWrite(M4_IN2, LOW);
   analogWrite(EN_M1, 0);
   analogWrite(EN_M2, 0);
   analogWrite(EN_M3, 0);
