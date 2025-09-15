@@ -52,7 +52,7 @@ void sendSensorData() {
     Serial.println();
 
     // send Tof data
-    Serial.print("TOF");
+    Serial.print("TOF,");
     for (int i = 0; i < NUM_SENSORS; i++) {
         Serial.print(tof_distances[i]);
         if (i < NUM_SENSORS - 1) Serial.print(",");
@@ -60,7 +60,7 @@ void sendSensorData() {
     Serial.println();
 
     // send encoder data
-    Serial.print("ENC");
+    Serial.print("ENC,");
     Serial.print(countM1); Serial.print(",");
     Serial.print(countM2); Serial.print(",");
     Serial.print(countM3); Serial.print(",");
@@ -169,8 +169,9 @@ void setupFirmware() {
 void loopFirmware() {
   // print sensor data
   if (millis() - last_cmd_time > 500) { // send data every 500ms
-    printToFReadings();
-    printEncoders();
+    // printToFReadings();
+    // printEncoders();
+    sendSensorData();
     last_cmd_time = millis();
   }
 
