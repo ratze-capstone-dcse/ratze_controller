@@ -13,8 +13,8 @@
 
 #define EN_M1 23
 #define EN_M2 19
-#define EN_M3 18
-#define EN_M4 5
+#define EN_M3 5 // 18
+#define EN_M4 18 // 5
 
 #define ENC_M1_A 4 
 #define ENC_M1_B 15
@@ -41,7 +41,11 @@ void IRAM_ATTR encoderM1() {
 }
 
 void IRAM_ATTR encoderM2() {
-  if (digitalRead(ENC_M2_B) == LOW) countM2++;
+  // if (digitalRead(ENC_M2_B) == LOW) countM2++;
+
+  // to fix the reverse increment issue for M2 encoder
+  if (digitalRead(ENC_M2_B) == HIGH) countM2++; // Swapped from LOW to HIGH
+
   else countM2--;
 }
 
@@ -57,6 +61,15 @@ void IRAM_ATTR encoderM4() {
 
 // Motor control functions
 void setupMotors() {
+  noInterrupts();  // Disable interrupts during setup
+
+
+  // First disable all motors before anything else
+  pinMode(EN_M1, OUTPUT); digitalWrite(EN_M1, LOW);
+  pinMode(EN_M2, OUTPUT); digitalWrite(EN_M2, LOW);
+  pinMode(EN_M3, OUTPUT); digitalWrite(EN_M3, LOW);
+  pinMode(EN_M4, OUTPUT); digitalWrite(EN_M4, LOW);
+
   int motorPins[] = {M1_IN1, M1_IN2, M2_IN1, M2_IN2, M3_IN1, M3_IN2, M4_IN1, M4_IN2,
                      EN_M1, EN_M2, EN_M3, EN_M4};
   for (int i = 0; i < 12; i++) {
@@ -69,6 +82,12 @@ void setupMotors() {
   for (int i = 0; i < 8; i++) {
     pinMode(encoderPins[i], INPUT_PULLUP);
   }
+
+  interrupts();  // Re-enable interrupts before attaching handlers
+
+
+  // Wait a moment for pins to stabilize
+  delay(10);
 
   attachInterrupt(digitalPinToInterrupt(ENC_M1_A), encoderM1, RISING);
   attachInterrupt(digitalPinToInterrupt(ENC_M2_A), encoderM2, RISING);
