@@ -150,6 +150,7 @@ void setupFirmware() {
   // Initialize motors
   setupMotors();
   Serial.println("# Motors initialized");
+  resetEncoders();
   
   // Initialize ToF sensors
   if (setupToF()) {

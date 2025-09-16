@@ -170,10 +170,12 @@ void moveStop() {
 }
 
 void resetEncoders() {
+  noInterrupts();
   countM1 = 0;
   countM2 = 0;
   countM3 = 0;
   countM4 = 0;
+  interrupts();
 }
 
 void printEncoders() {
