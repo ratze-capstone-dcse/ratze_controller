@@ -35,6 +35,14 @@ bool isMoving = false;
 int currentSpeed = 0;
 
 
+// 90 degree turn calculation with encoders
+#define COUNTS_PER_REV 100 // 100 pulses per revolution with 4x decoding
+#define WHEEL_RADIUS 0.035 // in meters (30mm)
+#define WHEEL_BASE 0.145 // in meters (distance between left and right wheels) 14,5cm
+
+#define TURN_90_COUNTS ((WHEEL_BASE) / (4 * WHEEL_RADIUS * 2) * COUNTS_PER_REV)
+
+
 void sendSensorData() {
     // send imu data
     Serial.print("IMU, ");
@@ -85,6 +93,70 @@ void setMotorSpeed(int speed){
     isMoving = true ;
 }
 
+void turn90degrees(bool clockwise, int speed) {
+  if (clockwise) {
+    setTurnRight();
+  } else {
+    setTurnLeft();
+  }
+  
+  analogWrite(EN_M1, speed);
+  analogWrite(EN_M2, speed);
+  analogWrite(EN_M3, speed);
+  analogWrite(EN_M4, speed);
+
+  long targetCounts = TURN_90_COUNTS;
+  long initialCountM1 = countM1;
+  
+  while (abs(countM1) < targetCounts && abs(countM2) < targetCounts &&
+         abs(countM3) < targetCounts && abs(countM4) < targetCounts) {
+    // wait until the turn is complete
+    delay(1);
+  }
+  
+  moveStop();
+}
+
+void turn90degrees_imu(bool clockwise, int speed) {
+  float initialHeading = corrected_heading;
+  float targetHeading = initialHeading + (clockwise ? 90.0 : -90.0);
+
+  if (targetHeading >= 360.0) targetHeading -= 360.0;
+  if (targetHeading < 0.0) targetHeading += 360.0;
+
+  if (clockwise) {
+    setTurnRight();
+  } else {
+    setTurnLeft();
+  }
+
+  // start turning
+
+  analogWrite(EN_M1, speed);
+  analogWrite(EN_M2, speed);
+  analogWrite(EN_M3, speed);
+  analogWrite(EN_M4, speed);
+
+  while (true) {
+    extract_heading();
+    float currentHeading = corrected_heading;
+
+    if (clockwise) {
+      if ((initialHeading < targetHeading && currentHeading >= targetHeading) ||
+          (initialHeading > targetHeading && (currentHeading >= targetHeading || currentHeading < initialHeading))) {
+        break;
+      }
+    } else {
+      if ((initialHeading > targetHeading && currentHeading <= targetHeading) ||
+          (initialHeading < targetHeading && (currentHeading <= targetHeading || currentHeading > initialHeading))) {
+        break;
+      }
+    }
+    delay(10); // small delay to avoid busy-waiting
+  }
+  moveStop();
+}
+
 void processCmd(){
     char cmd = cmd_buffer[0];
     char* arg = cmd_buffer + 1;
@@ -102,13 +174,17 @@ void processCmd(){
             Serial.println("ACK:B");
             break;
         case CMD_TURN_RIGHT:
-            turnRight(value > 0 ? value : 150);
-            isMoving = true;
+            // turnRight(value > 0 ? value : 150);
+            // isMoving = true;
+            turn90degrees(true, value > 0 ? value : 150);
+            isMoving = false; // after turn stop
             Serial.println("ACK:R");
             break;
         case CMD_TURN_LEFT:
-            turnLeft(value > 0 ? value : 150);
-            isMoving = true;
+            // turnLeft(value > 0 ? value : 150);
+            // isMoving = true;
+            turn90degrees(false, value > 0 ? value : 150);
+            isMoving = false; // after turn stop
             Serial.println("ACK:L");
             break;
         case CMD_STOP:

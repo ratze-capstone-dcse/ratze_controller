@@ -28,6 +28,12 @@
 #define MAX_SPEED 255
 #define STEP_DELAY 5    
 
+// #define COUNTS_PER_REV 100 // 100 pulses per revolution with 4x decoding
+// #define WHEEL_RADIUS 0.035 // in meters (30mm)
+// #define WHEEL_BASE 0.145 // in meters (distance between left and right wheels) 14,5cm
+
+// #define TURN_90_COUNTS ((WHEEL_BASE) / (4 * WHEEL_RADIUS * 2) * COUNTS_PER_REV)
+
 // Encoder counts
 volatile long countM1 = 0;
 volatile long countM2 = 0;
