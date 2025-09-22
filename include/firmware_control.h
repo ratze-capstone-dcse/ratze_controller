@@ -33,10 +33,11 @@ int cmd_index = 0;
 unsigned long last_cmd_time = 0;
 bool isMoving = false;
 int currentSpeed = 0;
+static long targetCounts = 0;
 
 
 // 90 degree turn calculation with encoders
-#define COUNTS_PER_REV 100 // 100 pulses per revolution with 4x decoding
+#define COUNTS_PER_REV 400 // 100 pulses per revolution with 4x decoding
 #define WHEEL_RADIUS 0.035 // in meters (30mm)
 #define WHEEL_BASE 0.145 // in meters (distance between left and right wheels) 14,5cm
 
@@ -105,7 +106,7 @@ void turn90degrees(bool clockwise, int speed) {
   analogWrite(EN_M3, speed);
   analogWrite(EN_M4, speed);
 
-  long targetCounts = TURN_90_COUNTS;
+  targetCounts += TURN_90_COUNTS;
   long initialCountM1 = countM1;
   
   while (abs(countM1) < targetCounts && abs(countM2) < targetCounts &&
@@ -176,14 +177,17 @@ void processCmd(){
         case CMD_TURN_RIGHT:
             // turnRight(value > 0 ? value : 150);
             // isMoving = true;
-            turn90degrees(true, value > 0 ? value : 150);
+            // turn90degrees_imu(true, value > 0 ? value : 200);
+            turn90degrees(true, value > 0 ? value : 200);
+
             isMoving = false; // after turn stop
             Serial.println("ACK:R");
             break;
         case CMD_TURN_LEFT:
             // turnLeft(value > 0 ? value : 150);
             // isMoving = true;
-            turn90degrees(false, value > 0 ? value : 150);
+            // turn90degrees_imu(false, value > 0 ? value : 200);
+            turn90degrees(false, value > 0 ? value : 200);
             isMoving = false; // after turn stop
             Serial.println("ACK:L");
             break;

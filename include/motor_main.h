@@ -109,15 +109,15 @@ void setMotorDirection(bool forward) {
 }
 
 void setTurnLeft() {
-  digitalWrite(M1_IN1, LOW);  digitalWrite(M1_IN2, HIGH);
-  digitalWrite(M2_IN1, HIGH); digitalWrite(M2_IN2, LOW);
+  digitalWrite(M1_IN1, HIGH);  digitalWrite(M1_IN2, LOW);
+  digitalWrite(M2_IN1, LOW); digitalWrite(M2_IN2, HIGH);
   digitalWrite(M3_IN1, LOW);  digitalWrite(M3_IN2, HIGH);
   digitalWrite(M4_IN1, HIGH); digitalWrite(M4_IN2, LOW);
 }
 
 void setTurnRight() {
-  digitalWrite(M1_IN1, HIGH); digitalWrite(M1_IN2, LOW);
-  digitalWrite(M2_IN1, LOW);  digitalWrite(M2_IN2, HIGH);
+  digitalWrite(M1_IN1, LOW); digitalWrite(M1_IN2, HIGH);
+  digitalWrite(M2_IN1, HIGH);  digitalWrite(M2_IN2, LOW);
   digitalWrite(M3_IN1, HIGH); digitalWrite(M3_IN2, LOW);
   digitalWrite(M4_IN1, LOW);  digitalWrite(M4_IN2, HIGH);
 }
