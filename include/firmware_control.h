@@ -3,8 +3,9 @@
 #include <bno055-heading.h>
 // #include <bno055-new.h> // uncomment if using full imu data ya
 #include <Wire.h>
-#include <motor_main.h>
+#include <motor_driver.h>
 #include <tof_main.h>
+#include "header.h"
 
 // Serial communication parameters
 #define SERIAL_BAUD 115200
@@ -37,7 +38,7 @@ static long long targetCounts = 0;
 
 
 // 90 degree turn calculation with encoders
-#define COUNTS_PER_REV 400 // 100 pulses per revolution with 4x decoding
+#define COUNTS_PER_REV 100
 #define WHEEL_RADIUS 0.035 // in meters (30mm)
 #define WHEEL_BASE 0.145 // in meters (distance between left and right wheels) 14,5cm
 
@@ -70,10 +71,10 @@ void sendSensorData() {
 
     // send encoder data
     Serial.print("ENC,");
-    Serial.print(countM1); Serial.print(",");
-    Serial.print(countM2); Serial.print(",");
-    Serial.print(countM3); Serial.print(",");
-    Serial.print(countM4); 
+    Serial.print(countM1_); Serial.print(",");
+    Serial.print(countM2_); Serial.print(",");
+    Serial.print(countM3_); Serial.print(",");
+    Serial.print(countM4_); 
     Serial.println();
 }
 void setMotorSpeed(int speed){
@@ -102,10 +103,10 @@ void turn90degrees(bool clockwise, int speed) {
     setTurnLeft();
   }
 
-  int initialCountM1 = countM1;
-  int initialCountM2 = countM2;
-  int initialCountM3 = countM3;
-  int initialCountM4 = countM4;
+  int initialCountM1 = countM1_;
+  int initialCountM2 = countM2_;
+  int initialCountM3 = countM3_;
+  int initialCountM4 = countM4_;
   
   analogWrite(EN_M1, speed);
   analogWrite(EN_M2, speed);
@@ -116,26 +117,26 @@ void turn90degrees(bool clockwise, int speed) {
   Serial.print("Target Counts for 90-degree turn: ");
   Serial.println(targetCounts);
 
-  // while (abs(countM1) < targetCounts && abs(countM2) < targetCounts &&
-  //        abs(countM3) < targetCounts && abs(countM4) < targetCounts) {
+  // while (abs(countM1_) < targetCounts && abs(countM2_) < targetCounts &&
+  //        abs(countM3_) < targetCounts && abs(countM4_) < targetCounts) {
   //   // wait until the turn is complete
   //   delay(1);
   // }
   // if (clockwise) {
-  //   while (abs(countM2) < targetCounts && abs(countM4) < targetCounts) {
+  //   while (abs(countM2_) < targetCounts && abs(countM4_) < targetCounts) {
   //     delay(1);
   //   }
   // } else {
-  //   while (abs(countM1) < targetCounts && abs(countM3) < targetCounts) {
+  //   while (abs(countM1_) < targetCounts && abs(countM3_) < targetCounts) {
   //     delay(1);
   //   }
   // }
 
   while (true) {
-    int deltaM1 = abs(countM1 - initialCountM1);
-    int deltaM2 = abs(countM2 - initialCountM2);
-    int deltaM3 = abs(countM3 - initialCountM3);
-    int deltaM4 = abs(countM4 - initialCountM4);
+    int deltaM1 = abs(countM1_ - initialCountM1);
+    int deltaM2 = abs(countM2_ - initialCountM2);
+    int deltaM3 = abs(countM3_ - initialCountM3);
+    int deltaM4 = abs(countM4_ - initialCountM4);
 
     if (deltaM1 >= TURN_90_COUNTS && deltaM2 >= TURN_90_COUNTS &&
         deltaM3 >= TURN_90_COUNTS && deltaM4 >= TURN_90_COUNTS) {
