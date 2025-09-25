@@ -33,7 +33,7 @@ int cmd_index = 0;
 unsigned long last_cmd_time = 0;
 bool isMoving = false;
 int currentSpeed = 0;
-static long targetCounts = 0;
+static long long targetCounts = 0;
 
 
 // 90 degree turn calculation with encoders
@@ -94,30 +94,66 @@ void setMotorSpeed(int speed){
     isMoving = true ;
 }
 
+// for discrete turns with encoder
 void turn90degrees(bool clockwise, int speed) {
   if (clockwise) {
     setTurnRight();
   } else {
     setTurnLeft();
   }
+
+  int initialCountM1 = countM1;
+  int initialCountM2 = countM2;
+  int initialCountM3 = countM3;
+  int initialCountM4 = countM4;
   
   analogWrite(EN_M1, speed);
   analogWrite(EN_M2, speed);
   analogWrite(EN_M3, speed);
   analogWrite(EN_M4, speed);
 
-  targetCounts += TURN_90_COUNTS;
-  long initialCountM1 = countM1;
-  
-  while (abs(countM1) < targetCounts && abs(countM2) < targetCounts &&
-         abs(countM3) < targetCounts && abs(countM4) < targetCounts) {
-    // wait until the turn is complete
+  targetCounts += TURN_90_COUNTS;  
+  Serial.print("Target Counts for 90-degree turn: ");
+  Serial.println(targetCounts);
+
+  // while (abs(countM1) < targetCounts && abs(countM2) < targetCounts &&
+  //        abs(countM3) < targetCounts && abs(countM4) < targetCounts) {
+  //   // wait until the turn is complete
+  //   delay(1);
+  // }
+  // if (clockwise) {
+  //   while (abs(countM2) < targetCounts && abs(countM4) < targetCounts) {
+  //     delay(1);
+  //   }
+  // } else {
+  //   while (abs(countM1) < targetCounts && abs(countM3) < targetCounts) {
+  //     delay(1);
+  //   }
+  // }
+
+  while (true) {
+    int deltaM1 = abs(countM1 - initialCountM1);
+    int deltaM2 = abs(countM2 - initialCountM2);
+    int deltaM3 = abs(countM3 - initialCountM3);
+    int deltaM4 = abs(countM4 - initialCountM4);
+
+    if (deltaM1 >= TURN_90_COUNTS && deltaM2 >= TURN_90_COUNTS &&
+        deltaM3 >= TURN_90_COUNTS && deltaM4 >= TURN_90_COUNTS) {
+      Serial.print("Delta M1: "); Serial.print(deltaM1);
+      Serial.print(" Delta M2: "); Serial.print(deltaM2);
+      Serial.print(" Delta M3: "); Serial.print(deltaM3);
+      Serial.print(" Delta M4: "); Serial.println(deltaM4);
+      break;
+    }
     delay(1);
   }
+
+  
   
   moveStop();
 }
 
+// for more precise turns with imu, unfortunately tends to overshoot
 void turn90degrees_imu(bool clockwise, int speed) {
   float initialHeading = corrected_heading;
   float targetHeading = initialHeading + (clockwise ? 90.0 : -90.0);
@@ -178,7 +214,7 @@ void processCmd(){
             // turnRight(value > 0 ? value : 150);
             // isMoving = true;
             // turn90degrees_imu(true, value > 0 ? value : 200);
-            turn90degrees(true, value > 0 ? value : 200);
+            turn90degrees(true, value > 0 ? value : 225);
 
             isMoving = false; // after turn stop
             Serial.println("ACK:R");
@@ -187,7 +223,7 @@ void processCmd(){
             // turnLeft(value > 0 ? value : 150);
             // isMoving = true;
             // turn90degrees_imu(false, value > 0 ? value : 200);
-            turn90degrees(false, value > 0 ? value : 200);
+            turn90degrees(false, value > 0 ? value : 225);
             isMoving = false; // after turn stop
             Serial.println("ACK:L");
             break;
