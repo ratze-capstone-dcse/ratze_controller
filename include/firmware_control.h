@@ -4,6 +4,7 @@
 // #include <bno055-new.h> // uncomment if using full imu data ya
 #include <Wire.h>
 #include <motor_driver.h>
+#include <motor_control.h>
 #include <tof_main.h>
 #include "header.h"
 
@@ -202,7 +203,9 @@ void processCmd(){
 
     switch (cmd) {
         case CMD_MOVE_FORWARD:
-            moveForward(value > 0 ? value : 150);
+            // moveForward(value > 0 ? value : 150);
+            cmd_vel_.x = 0.3;
+            cmd_vel_.w = 0.0;
             isMoving = true;
             Serial.println("ACK:F");
             break;
@@ -322,4 +325,11 @@ void loopFirmware() {
     updateToFReadings();
     last_sensor_time = millis();
   }
+
+  static unsigned long last_control_time = 0;
+  if (millis() - last_control_time >= 10) {
+    motor_loop();
+    last_control_time = millis();
+  }
+
 }

@@ -33,7 +33,8 @@
 #define WHEEL_BASE 0.145   // in meters (distance between left and right wheels) 14,5cm
 #define TURN_90_COUNTS ((WHEEL_BASE) / (4 * WHEEL_RADIUS * 2) * TICKS_PER_REV)
 
-PID pid_(0.0, 0.0, 0.0);
+PID pid_right(0.0, 0.0, 0.0);
+PID pid_left(0.0, 0.0, 0.0);
 
 int MOTOR_DRIVER_PID_KP = 200.0;
 int  MOTOR_DRIVER_PID_KI = 70.0;

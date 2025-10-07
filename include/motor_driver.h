@@ -79,7 +79,8 @@ void setupMotors()
   attachInterrupt(digitalPinToInterrupt(ENC_M3_A), encoderM3, RISING);
   attachInterrupt(digitalPinToInterrupt(ENC_M4_A), encoderM4, RISING);
 
-  pid_.set_output_limits(-255, 255);
+  pid_right.set_output_limits(-255, 255);
+  pid_left.set_output_limits(-255, 255);
 
   resetEncoders();
 
@@ -205,6 +206,13 @@ void turnRight(int speed)
   analogWrite(EN_M4, speed);
 }
 
+void send_pwm(float left, float right) {
+  analogWrite(EN_M1, left);
+  analogWrite(EN_M2, right);
+  analogWrite(EN_M3, left);
+  analogWrite(EN_M4, right);
+}
+
 void moveStop()
 {
 
@@ -265,6 +273,9 @@ void compute_velocity()
 void compute_distance()
 {
   distance_.M1 = countM1_ * 2 * PI * WHEEL_RADIUS / TICKS_PER_REV;
+  distance_.M2 = countM2_ * 2 * PI * WHEEL_RADIUS / TICKS_PER_REV;
+  distance_.M3 = countM3_ * 2 * PI * WHEEL_RADIUS / TICKS_PER_REV;
+  distance_.M4 = countM4_ * 2 * PI * WHEEL_RADIUS / TICKS_PER_REV;
 }
 
 void compute_motor_data()
@@ -285,12 +296,6 @@ inline void bound(float &value, float min, float max)
   {
     value = max;
   }
-}
-
-void set_velocity(float velocity)
-{
-  bound(velocity, -MOTOR_MAX_VELOCITY, MOTOR_MAX_VELOCITY);
-  pid_.set_setpoint(velocity);
 }
 
 void resetEncoders()
