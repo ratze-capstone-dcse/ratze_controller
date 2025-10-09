@@ -30,6 +30,30 @@ void compute_wheel_speeds_()
   pid_left.set_setpoint(v_l);
 }
 
+inline float apply_deadband(float pwm)
+{
+  if (fabs(pwm) < 1e-3f)
+  {
+    return 0.0f;
+  }
+
+  const float sign = pwm > 0.0f ? 1.0f : -1.0f;
+  float magnitude = fabs(pwm);
+
+  magnitude = MOTOR_PWM_DEADBAND + (magnitude / MOTOR_PWM_MAX) * (MOTOR_PWM_MAX - MOTOR_PWM_DEADBAND);
+
+  if (magnitude > MOTOR_PWM_MAX)
+  {
+    magnitude = MOTOR_PWM_MAX;
+  }
+  else if (magnitude < MOTOR_PWM_DEADBAND)
+  {
+    magnitude = MOTOR_PWM_DEADBAND;
+  }
+
+  return sign * magnitude;
+}
+
 void motor_loop()
 {
   compute_motor_data();
@@ -39,15 +63,18 @@ void motor_loop()
   bound(error_motor_right, -255, 255);
   bound(error_motor_left, -255, 255);
 
-  if (error_motor_right < 0) {
+  auto pwm_motor_right = apply_deadband(error_motor_right);
+  auto pwm_motor_left = apply_deadband(error_motor_left);
+
+  if (pwm_motor_right < 0) {
     setTurnLeft();
   }
-  else if (error_motor_right > 0) {
+  else if (pwm_motor_right > 0) {
     setTurnRight();
   }
   else {
     moveStop();
   }
 
-  send_pwm(error_motor_left, error_motor_right);
+  send_pwm(pwm_motor_left, pwm_motor_right);
 }

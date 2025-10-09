@@ -28,6 +28,9 @@
 #define MAX_SPEED 255
 #define STEP_DELAY 5
 
+#define MOTOR_PWM_MAX 255.0f
+#define MOTOR_PWM_DEADBAND 200.0f
+
 #define TICKS_PER_REV 100
 #define WHEEL_RADIUS 0.035 // in meters (30mm)
 #define WHEEL_BASE 0.145   // in meters (distance between left and right wheels) 14,5cm
