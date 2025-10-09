@@ -218,7 +218,10 @@ void processCmd(){
             // turnRight(value > 0 ? value : 150);
             // isMoving = true;
             // turn90degrees_imu(true, value > 0 ? value : 200);
-            turn90degrees(true, value > 0 ? value : 225);
+            // turn90degrees(true, value > 0 ? value : 225);
+            cmd_vel_.x = 0.0;
+            cmd_vel_.w = -0.2;
+            
 
             isMoving = false; // after turn stop
             Serial.println("ACK:R");
@@ -227,11 +230,15 @@ void processCmd(){
             // turnLeft(value > 0 ? value : 150);
             // isMoving = true;
             // turn90degrees_imu(false, value > 0 ? value : 200);
-            turn90degrees(false, value > 0 ? value : 225);
+            // turn90degrees(false, value > 0 ? value : 225);
+            cmd_vel_.x = 0.0;
+            cmd_vel_.w = 0.2;
             isMoving = false; // after turn stop
             Serial.println("ACK:L");
             break;
         case CMD_STOP:
+            cmd_vel_.x = 0.0;
+            cmd_vel_.w = 0.0;
             moveStop();
             isMoving = false;
             Serial.println("ACK:S");
@@ -327,7 +334,7 @@ void loopFirmware() {
   }
 
   static unsigned long last_control_time = 0;
-  if (millis() - last_control_time >= 10) {
+  if (millis() - last_control_time >= 10) { // 100Hz update rate
     motor_loop();
     last_control_time = millis();
   }

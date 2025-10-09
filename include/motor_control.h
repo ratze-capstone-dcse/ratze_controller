@@ -40,10 +40,10 @@ void motor_loop()
   bound(error_motor_left, -255, 255);
 
   if (error_motor_right < 0) {
-    setTurnRight();
+    setTurnLeft();
   }
   else if (error_motor_right > 0) {
-    setTurnLeft();
+    setTurnRight();
   }
   else {
     moveStop();
