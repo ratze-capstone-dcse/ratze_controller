@@ -214,7 +214,7 @@ void processCmd(){
             // turnRight(value > 0 ? value : 150);
             // isMoving = true;
             // turn90degrees_imu(true, value > 0 ? value : 200);
-            turn90degrees(true, value > 0 ? value : 225);
+            turn90degrees(true, value > 0 ? value : 230);
 
             isMoving = false; // after turn stop
             Serial.println("ACK:R");
@@ -223,7 +223,7 @@ void processCmd(){
             // turnLeft(value > 0 ? value : 150);
             // isMoving = true;
             // turn90degrees_imu(false, value > 0 ? value : 200);
-            turn90degrees(false, value > 0 ? value : 225);
+            turn90degrees(false, value > 0 ? value : 230);
             isMoving = false; // after turn stop
             Serial.println("ACK:L");
             break;
