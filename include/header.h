@@ -1,5 +1,6 @@
 #pragma once
 #include "pid.hpp"
+#include "timer_api.hpp"
 
 // Motor pin definitions
 #define M1_IN1 26 //26
@@ -36,12 +37,16 @@
 #define WHEEL_BASE 0.145   // in meters (distance between left and right wheels) 14,5cm
 #define TURN_90_COUNTS ((WHEEL_BASE) / (4 * WHEEL_RADIUS * 2) * TICKS_PER_REV)
 
-PID pid_right(200.0, 0.0, 0.0);
-PID pid_left(200.0, 0.0, 0.0);
+PID pid_right(50.0, 10.0, 15.0); // Adjusted gains to reduce oscillation
+PID pid_left(50.0, 10.0, 15.0);  // Adjusted gains to reduce oscillation
 
 int MOTOR_DRIVER_PID_KP = 200.0;
 int  MOTOR_DRIVER_PID_KI = 70.0;
 int MOTOR_DRIVER_PID_KD = 30.0;
+
+inline unsigned long hz_to_ms(uint8_t hz) { return 1000 / hz; }
+
+TimerAPI motor_update_timer_(hz_to_ms(50));
 
 #define MOTOR_MAX_VELOCITY 1.0  // Maximum velocity in m/s
 
