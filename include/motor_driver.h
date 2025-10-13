@@ -189,22 +189,22 @@ void moveBackward(int speed)
   analogWrite(EN_M4, speed);
 }
 
-void turnLeft(int speed)
+void turnLeft(int left, int right)
 {
   setTurnLeft();
-  analogWrite(EN_M1, speed);
-  analogWrite(EN_M2, speed);
-  analogWrite(EN_M3, speed);
-  analogWrite(EN_M4, speed);
+  analogWrite(EN_M1, right);
+  analogWrite(EN_M2, left);
+  analogWrite(EN_M3, right);
+  analogWrite(EN_M4, left);
 }
 
-void turnRight(int speed)
+void turnRight(int left, int right)
 {
   setTurnRight();
-  analogWrite(EN_M1, speed);
-  analogWrite(EN_M2, speed);
-  analogWrite(EN_M3, speed);
-  analogWrite(EN_M4, speed);
+  analogWrite(EN_M1, right);
+  analogWrite(EN_M2, left);
+  analogWrite(EN_M3, right);
+  analogWrite(EN_M4, left);
 }
 
 void send_pwm(float left, float right) {
@@ -253,6 +253,17 @@ void compute_rpm()
   rpm_.M2 = (float(dt_ticks2) / dt_time2) * 60000.0 / TICKS_PER_REV;
   rpm_.M3 = (float(dt_ticks3) / dt_time3) * 60000.0 / TICKS_PER_REV;
   rpm_.M4 = (float(dt_ticks4) / dt_time4) * 60000.0 / TICKS_PER_REV;
+
+  last_encoder_reading_.M1 = countM1_;
+  last_encoder_reading_.M2 = countM2_;
+  last_encoder_reading_.M3 = countM3_;
+  last_encoder_reading_.M4 = countM4_;
+
+  last_data_reading_time_.M1 = now;
+  last_data_reading_time_.M2 = now;
+  last_data_reading_time_.M3 = now;
+  last_data_reading_time_.M4 = now;
+
 }
 
 void compute_angular_velocity()
