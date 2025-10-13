@@ -3,23 +3,23 @@
 #include <firmware_control.h>
 
 // WiFi credentials
-const char* ssid = "Ratze";
-const char* password = "1010101010";
+// const char* ssid = "Ratze";
+// const char* password = "1010101010";
 
-void setupWiFi() {
-  WiFi.begin(ssid, password);
-  Serial.print("Connecting to WiFi");
+// void setupWiFi() {
+//   WiFi.begin(ssid, password);
+//   Serial.print("Connecting to WiFi");
   
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-  }
+//   while (WiFi.status() != WL_CONNECTED) {
+//     delay(500);
+//     Serial.print(".");
+//   }
   
-  Serial.println();
-  Serial.println("WiFi connected!");
-  Serial.print("IP address: ");
-  Serial.println(WiFi.localIP());
-}
+//   Serial.println();
+//   Serial.println("WiFi connected!");
+//   Serial.print("IP address: ");
+//   Serial.println(WiFi.localIP());
+// }
 
 void printUSB() {
   // Serial.println("Hello, USB!");
@@ -69,17 +69,17 @@ void setup() {
   Serial.begin(115200);
   delay(150);
   
-  setupWiFi();
+  // setupWiFi();
   setupFirmware();
 
 }
 
 void loop() {
   // Check WiFi connection status
-  if (WiFi.status() != WL_CONNECTED) {
-    Serial.println("WiFi disconnected, attempting reconnection...");
-    setupWiFi();
-  }
+  // if (WiFi.status() != WL_CONNECTED) {
+  //   Serial.println("WiFi disconnected, attempting reconnection...");
+  //   setupWiFi();
+  // }
   
   loopFirmware();
 

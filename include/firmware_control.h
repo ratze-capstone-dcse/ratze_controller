@@ -204,7 +204,7 @@ void processCmd(){
     switch (cmd) {
         case CMD_MOVE_FORWARD:
             // moveForward(value > 0 ? value : 150);
-            cmd_vel_.x = 0.3;
+            cmd_vel_.x = 1.0;
             cmd_vel_.w = 0.0;
             isMoving = true;
             Serial.println("ACK:F");
@@ -220,7 +220,7 @@ void processCmd(){
             // turn90degrees_imu(true, value > 0 ? value : 200);
             // turn90degrees(true, value > 0 ? value : 225);
             cmd_vel_.x = 0.0;
-            cmd_vel_.w = -0.2;
+            cmd_vel_.w = -1.0;
             
 
             isMoving = false; // after turn stop
@@ -232,13 +232,13 @@ void processCmd(){
             // turn90degrees_imu(false, value > 0 ? value : 200);
             // turn90degrees(false, value > 0 ? value : 225);
             cmd_vel_.x = 0.0;
-            cmd_vel_.w = 0.2;
+            cmd_vel_.w = 1.0;
             isMoving = false; // after turn stop
             Serial.println("ACK:L");
             break;
         case CMD_STOP:
-            cmd_vel_.x = 0.0;
-            cmd_vel_.w = 0.0;
+            // cmd_vel_.x = 0.0;
+            // cmd_vel_.w = 0.0;
             moveStop();
             isMoving = false;
             Serial.println("ACK:S");

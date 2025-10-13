@@ -19,6 +19,8 @@ void compute_wheel_speeds_()
   float v_l = (2 * cmd_vel_.x - cmd_vel_.w * WHEEL_BASE) /
               (2 * WHEEL_RADIUS);
 
+  Serial.println("Wheel Speeds (rad/s): Right: " + String(v_r, 2) + " | Left: " + String(v_l, 2));
+
   // Downscale velocity for motor max velocity
   // v_r = v_r * 0.0338;
   // v_l = v_l * 0.0338;
@@ -32,7 +34,7 @@ void compute_wheel_speeds_()
 
 inline float apply_deadband(float pwm)
 {
-  if (fabs(pwm) < 1e-3f)
+  if (fabs(pwm) < 50.0f)
   {
     return 0.0f;
   }
@@ -56,6 +58,8 @@ inline float apply_deadband(float pwm)
 
 void motor_loop()
 {
+  compute_wheel_speeds_();
+
   compute_motor_data();
   auto error_motor_right = pid_right.compute(velocity_.M1);
   auto error_motor_left = pid_left.compute(velocity_.M2);
@@ -76,5 +80,6 @@ void motor_loop()
     moveStop();
   }
 
+  Serial.println("PWM Right: " + String(pwm_motor_right, 2) + " | PWM Left: " + String(pwm_motor_left, 2));
   send_pwm(pwm_motor_left, pwm_motor_right);
 }
