@@ -55,19 +55,13 @@ void sendSensorData()
   Serial.print(',');
 
   // We can add roll, pitch, yaw if using the other BNO mode
-  Serial.print(0.0, 2);
-  Serial.print(","); // Roll placeholder
-  Serial.print(0.0, 2);
-  Serial.print(","); // Pitch placeholder
-  Serial.print(0.0, 2);
-  Serial.print(","); // Yaw placeholder
-  Serial.print(sys_calib);
-  Serial.print(",");
-  Serial.print(gyro_calib);
-  Serial.print(",");
-  Serial.print(accel_calib);
-  Serial.print(",");
-  Serial.print(mag_calib);
+  Serial.print(roll, 2); Serial.print(","); // Roll placeholder
+  Serial.print(pitch, 2); Serial.print(","); // Pitch placeholder
+  Serial.print(yaw, 2); Serial.print(","); // Yaw placeholder
+  Serial.print(sys_calib_status); Serial.print(",");
+  Serial.print(gyro_calib); Serial.print(",");
+  Serial.print(accel_calib); Serial.print(",");
+  Serial.print(mag_calib_status);
   Serial.println();
 
   // send Tof data

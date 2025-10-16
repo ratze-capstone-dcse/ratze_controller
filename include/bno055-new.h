@@ -36,7 +36,12 @@ float rad_roll = 0.0, rad_pitch = 0.0, rad_yaw = 0.0;
 float last_roll = 0.0, last_pitch = 0.0, last_yaw = 0.0;
 float delta_roll = 0.0, delta_pitch = 0.0, delta_yaw = 0.0;
 float gyro_x = 0.0, gyro_y = 0.0, gyro_z = 0.0; 
-// float heading_offset = 0.0;
+
+// heading data
+float heading = 0.0;
+float heading_offset = 0.0;
+float corrected_heading = 0.0;
+
 unsigned char gyro_calib, accel_calib;
 
 
@@ -87,8 +92,14 @@ void extract_euler() {
     bno055_read_euler_hrp(&bno_euler);
 
     float raw_heading = ((float)bno_euler.h / EULER_TO_DEG);
+    heading = raw_heading;
     if (heading < 0) heading += 360;
     else if (heading >= 360) heading -= 360;
+
+    // calculate corrected heading 
+    corrected_heading = heading - heading_offset + 90;
+    if (corrected_heading < 0) corrected_heading += 360;
+    else if (corrected_heading >= 360) corrected_heading -= 360;
 
     roll = -(float)bno_euler.p / EULER_TO_DEG;
     pitch = (float)bno_euler.r / EULER_TO_DEG;
