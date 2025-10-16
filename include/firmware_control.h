@@ -1,7 +1,7 @@
 #pragma once
 #include <Arduino.h>
-#include <bno055-heading.h>
-// #include <bno055-new.h> // uncomment if using full imu data ya
+// #include <bno055-heading.h>
+#include <bno055-new.h> // uncomment if using full imu data ya
 #include <Wire.h>
 #include <motor_driver.h>
 #include <motor_control.h>
@@ -52,24 +52,23 @@ void sendSensorData()
 {
   // send imu data
   Serial.print("IMU, ");
-  Serial.print(corrected_heading, 2);
-  Serial.print(',');
-
-  // We can add roll, pitch, yaw if using the other BNO mode
-  Serial.print(0.0, 2);
-  Serial.print(","); // Roll placeholder
-  Serial.print(0.0, 2);
-  Serial.print(","); // Pitch placeholder
-  Serial.print(0.0, 2);
-  Serial.print(","); // Yaw placeholder
-  Serial.print(sys_calib);
+  Serial.print(rad_roll, 3);
   Serial.print(",");
-  Serial.print(gyro_calib);
+  Serial.print(rad_pitch, 3);
   Serial.print(",");
-  Serial.print(accel_calib);
+  Serial.print(rad_yaw, 3);
   Serial.print(",");
-  Serial.print(mag_calib);
-  Serial.println();
+  Serial.print(gyro_x, 3);
+  Serial.print(",");
+  Serial.print(gyro_y, 3);
+  Serial.print(",");
+  Serial.print(gyro_z, 3);
+  Serial.print(",");
+  Serial.print(_linear_acc.x, 3);
+  Serial.print(",");
+  Serial.print(_linear_acc.y, 3);
+  Serial.print(",");
+  Serial.print(_linear_acc.z, 3);
 
   // send Tof data
   Serial.print("TOF,");
@@ -181,8 +180,8 @@ void processCmd()
     Serial.println("ACK:E");
     break;
   case CMD_CALIBRATE_HEADING:
-    heading_offset = heading;
-    Serial.println("ACK:C");
+    // heading_offset = heading;
+    // Serial.println("ACK:C");
     break;
   case CMD_KP:
     MOTOR_DRIVER_PID_KP = value;
@@ -261,8 +260,8 @@ void setupFirmware()
 void loopFirmware()
 {
   // print sensor data
-  if (millis() - last_cmd_time > 500)
-  { // send data every 500ms
+  if (millis() - last_cmd_time > 100)
+  { // send data every 100ms
     // printToFReadings();
     // printEncoders();
     sendSensorData();
@@ -301,7 +300,8 @@ void loopFirmware()
   static unsigned long last_sensor_time = 0;
   if (millis() - last_sensor_time >= 50)
   { // 20Hz update rate
-    extract_heading();
+    // extract_heading();
+    update_imu();
     updateToFReadings();
     last_sensor_time = millis();
   }

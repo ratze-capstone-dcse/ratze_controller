@@ -137,9 +137,9 @@ void init_imu() {
 
 void update_imu() {
     extract_euler();
-    extract_linear_accelerometer();
     extract_gyroscope();
     extract_accelerometer();
+    extract_linear_accelerometer();
 
     delta_roll = abs(roll - last_roll);
     delta_pitch = abs(pitch - last_pitch);
