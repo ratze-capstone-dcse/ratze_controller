@@ -69,6 +69,7 @@ void sendSensorData()
   Serial.print(_linear_acc.y, 3);
   Serial.print(",");
   Serial.print(_linear_acc.z, 3);
+  Serial.println();
 
   // send Tof data
   Serial.print("TOF,");
