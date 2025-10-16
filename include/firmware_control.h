@@ -1,7 +1,7 @@
 #pragma once
 #include <Arduino.h>
 #include <bno055-heading.h>
-// #include <bno055-new.h> // uncomment if using full imu data ya
+#include <bno055-new.h> // uncomment if using full imu data ya
 #include <Wire.h>
 #include <motor_driver.h>
 #include <motor_control.h>
@@ -275,7 +275,8 @@ void loopFirmware()
   static unsigned long last_sensor_time = 0;
   if (millis() - last_sensor_time >= 50)
   { // 20Hz update rate
-    extract_heading();
+    // extract_heading();
+    update_imu();
     updateToFReadings();
     last_sensor_time = millis();
   }
