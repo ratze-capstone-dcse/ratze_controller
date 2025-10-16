@@ -87,13 +87,13 @@ void extract_euler() {
     bno055_read_euler_hrp(&bno_euler);
 
     float raw_heading = ((float)bno_euler.h / EULER_TO_DEG);
-    if (heading < 0) heading += 360;
-    else if (heading >= 360) heading -= 360;
+    if (raw_heading < 0) raw_heading += 360;
+    else if (raw_heading >= 360) raw_heading -= 360;
 
     roll = -(float)bno_euler.p / EULER_TO_DEG;
     pitch = (float)bno_euler.r / EULER_TO_DEG;
 
-    yaw = calc_yaw(heading);
+    yaw = calc_yaw(raw_heading);
     
     rad_roll = (float)bno_euler.p / EULER_TO_RAD;
     rad_pitch = (float)bno_euler.r / EULER_TO_RAD;

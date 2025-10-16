@@ -51,7 +51,7 @@ static long long targetCounts = 0;
 void sendSensorData()
 {
   // send imu data
-  Serial.print("IMU, ");
+  Serial.print("IMU,");
   Serial.print(rad_roll, 3);
   Serial.print(",");
   Serial.print(rad_pitch, 3);
