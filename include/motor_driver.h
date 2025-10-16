@@ -155,7 +155,7 @@ void decelerateFrom(int startSpeed)
   }
 }
 
-void moveForward(int speed)
+void moveForward(int left, int right)
 {
   digitalWrite(M1_IN1, HIGH);
   digitalWrite(M1_IN2, LOW);
@@ -166,10 +166,10 @@ void moveForward(int speed)
   digitalWrite(M4_IN1, LOW);
   digitalWrite(M4_IN2, HIGH);
 
-  analogWrite(EN_M1, speed);
-  analogWrite(EN_M2, speed);
-  analogWrite(EN_M3, speed);
-  analogWrite(EN_M4, speed);
+  analogWrite(EN_M1, right);
+  analogWrite(EN_M2, left);
+  analogWrite(EN_M3, right);
+  analogWrite(EN_M4, left);
 }
 
 void moveBackward(int speed)

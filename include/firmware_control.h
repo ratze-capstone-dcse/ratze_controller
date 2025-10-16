@@ -25,6 +25,7 @@
 #define CMD_KP 'P'
 #define CMD_KI 'I'
 #define CMD_KD 'D'
+#define CMD_INFO 'Q'
 
 // Tof Setup
 #define TCA9548A_ADDR 0x70
@@ -124,6 +125,8 @@ void processCmd()
     cmd_vel_.x = 1.0;
     cmd_vel_.w = 0.0;
     isMoving = true;
+    pid_right.reset();
+    pid_left.reset();
     Serial.println("ACK:F");
     break;
   case CMD_MOVE_BACKWARD:
@@ -131,6 +134,8 @@ void processCmd()
     cmd_vel_.x = -1.0;
     cmd_vel_.w = 0.0;
     isMoving = true;
+    pid_right.reset();
+    pid_left.reset();
     Serial.println("ACK:B");
     break;
   case CMD_TURN_RIGHT:
@@ -139,10 +144,12 @@ void processCmd()
     // turn90degrees_imu(true, value > 0 ? value : 200);
     // turn90degrees(true, value > 0 ? value : 225);
     cmd_vel_.x = 0.0;
-    cmd_vel_.w = -1.0;
+    cmd_vel_.w = -4.0;
 
     isMoving = false; // after turn stop
     Serial.println("ACK:R");
+    pid_right.reset();
+    pid_left.reset();
     break;
   case CMD_TURN_LEFT:
     // turnLeft(value > 0 ? value : 150);
@@ -150,13 +157,17 @@ void processCmd()
     // turn90degrees_imu(false, value > 0 ? value : 200);
     // turn90degrees(false, value > 0 ? value : 225);
     cmd_vel_.x = 0.0;
-    cmd_vel_.w = 1.0;
+    cmd_vel_.w = 4.0;
     isMoving = false; // after turn stop
     Serial.println("ACK:L");
+    pid_right.reset();
+    pid_left.reset();
     break;
   case CMD_STOP:
     cmd_vel_.x = 0.0;
     cmd_vel_.w = 0.0;
+    pid_right.reset();
+    pid_left.reset();
     // moveStop();
     isMoving = false;
     Serial.println("ACK:S");
@@ -176,14 +187,29 @@ void processCmd()
   case CMD_KP:
     MOTOR_DRIVER_PID_KP = value;
     update_pid_gain();
+    Serial.println("==========================");
+    Serial.println("Set KP to " + String(value));
+    Serial.println("==========================");
     break;
   case CMD_KI:
     MOTOR_DRIVER_PID_KI = value;
     update_pid_gain();
+    Serial.println("==========================");
+    Serial.println("Set KI to " + String(value));
+    Serial.println("==========================");
     break;
   case CMD_KD:
     MOTOR_DRIVER_PID_KD = value;
     update_pid_gain();
+    Serial.println("==========================");
+    Serial.println("Set KD to " + String(value));
+    Serial.println("==========================");
+    break;
+  case CMD_INFO:
+    Serial.println("==========================");
+    Serial.println("Current speed M1: " + String(velocity_.M1));
+    Serial.println("Current speed M2: " + String(velocity_.M2));
+    Serial.println("==========================");
     break;
   default:
     Serial.print("ERR:Unknown command: ");
@@ -280,5 +306,10 @@ void loopFirmware()
     last_sensor_time = millis();
   }
 
-  motor_loop();
+  static unsigned long last_motor_time = 0;
+  if (millis() - last_motor_time >= 10)
+  {
+    motor_loop();
+    last_motor_time = millis();
+  }
 }

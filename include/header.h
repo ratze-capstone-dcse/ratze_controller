@@ -3,21 +3,21 @@
 #include "timer_api.hpp"
 
 // Motor pin definitions
-#define M1_IN1 26 //26
-#define M1_IN2 25 //25
-#define M2_IN1 33 //33
-#define M2_IN2 32 //32
-#define M3_IN1 13 //13
-#define M3_IN2 12 //12
-#define M4_IN1 14 //14
-#define M4_IN2 27 //27
+#define M1_IN1 26 // 26
+#define M1_IN2 25 // 25
+#define M2_IN1 33 // 33
+#define M2_IN2 32 // 32
+#define M3_IN1 13 // 13
+#define M3_IN2 12 // 12
+#define M4_IN1 14 // 14
+#define M4_IN2 27 // 27
 
 #define EN_M1 23
 #define EN_M2 19
-#define EN_M3 5 // 18
+#define EN_M3 5  // 18
 #define EN_M4 18 // 5
 
-#define ENC_M1_A 4 
+#define ENC_M1_A 4
 #define ENC_M1_B 15
 #define ENC_M2_A 34
 #define ENC_M2_B 35
@@ -34,23 +34,29 @@
 
 #define TICKS_PER_REV 100
 #define WHEEL_RADIUS 0.035 // in meters (30mm)
-#define WHEEL_BASE 0.145   // in meters (distance between left and right wheels) 14,5cm
+#define WHEEL_BASE 0.15   // in meters (distance between front and rear wheels)
 #define TURN_90_COUNTS ((WHEEL_BASE) / (4 * WHEEL_RADIUS * 2) * TICKS_PER_REV)
 
-PID pid_right(50.0, 10.0, 15.0); // Adjusted gains to reduce oscillation
-PID pid_left(50.0, 10.0, 15.0);  // Adjusted gains to reduce oscillation
+PID pid_right(50.0, 10.0, 0.0);
+PID pid_left(50.0, 10.0, 0.0); 
 
 int MOTOR_DRIVER_PID_KP = 200.0;
-int  MOTOR_DRIVER_PID_KI = 70.0;
+int MOTOR_DRIVER_PID_KI = 70.0;
 int MOTOR_DRIVER_PID_KD = 30.0;
+
+float MOTOR_PWM_SCALE_RIGHT = 1.0f;
+float MOTOR_PWM_SCALE_LEFT = 1.0f;
+float MOTOR_PWM_BIAS_RIGHT = 0.0f;
+float MOTOR_PWM_BIAS_LEFT = 0.0f;
 
 inline unsigned long hz_to_ms(uint8_t hz) { return 1000 / hz; }
 
 TimerAPI motor_update_timer_(hz_to_ms(50));
 
-#define MOTOR_MAX_VELOCITY 1.0  // Maximum velocity in m/s
+#define MOTOR_MAX_VELOCITY 1.0 // Maximum velocity in m/s
 
-struct {
+struct
+{
     float x;
     float w;
 } cmd_vel_;
@@ -61,42 +67,48 @@ volatile long countM2_ = 0;
 volatile long countM3_ = 0;
 volatile long countM4_ = 0;
 
-struct {
+struct
+{
     unsigned long M1;
     unsigned long M2;
     unsigned long M3;
     unsigned long M4;
 } last_data_reading_time_;
 
-struct {
+struct
+{
     int32_t M1;
     int32_t M2;
     int32_t M3;
     int32_t M4;
 } last_encoder_reading_;
 
-struct {
+struct
+{
     float M1;
     float M2;
     float M3;
     float M4;
 } rpm_;
 
-struct {
+struct
+{
     float M1;
     float M2;
     float M3;
     float M4;
 } angular_velocity_;
 
-struct {
+struct
+{
     float M1;
     float M2;
     float M3;
     float M4;
 } velocity_;
 
-struct {
+struct
+{
     float M1;
     float M2;
     float M3;

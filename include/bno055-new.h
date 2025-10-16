@@ -136,8 +136,8 @@ void init_imu() {
 }
 
 void update_imu() {
-    extract_linear_accelerometer();
     extract_euler();
+    extract_linear_accelerometer();
     extract_gyroscope();
     extract_accelerometer();
 
