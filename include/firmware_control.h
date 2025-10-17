@@ -255,8 +255,8 @@ void processCmd()
     Serial.println(cmd_buffer);
     break;
   }
-  int value = 0;
-  int value2 = 0;
+  value = 0;
+  value2 = 0;
 }
 
 // Setup function to be called from main.cpp
