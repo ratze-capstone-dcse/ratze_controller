@@ -115,36 +115,65 @@ void setMotorSpeed(int speed)
 void processCmd()
 {
   char cmd = cmd_buffer[0];
-  char *arg = cmd_buffer + 1;
-  int value = atoi(arg);
+  int value = 0;
+  int value2 = 0;
+
+  if (cmd_index > 2 && cmd_buffer[1] == ':')
+  {
+    value = atoi(cmd_buffer + 2);
+    // Check for second value after another colon
+    char *colon_pos = strchr(cmd_buffer + 2, ':');
+    if (colon_pos != nullptr)
+    {
+      value2 = atoi(colon_pos + 1);
+    }
+  }
 
   switch (cmd)
   {
   case CMD_MOVE_FORWARD:
-    // moveForward(value > 0 ? value : 150);
-    cmd_vel_.x = 1.0;
-    cmd_vel_.w = 0.0;
+    if (value == 0 && value2 == 0)
+    {
+      cmd_vel_.x = 1.0;
+      cmd_vel_.w = 0.0;
+    }
+    else
+    {
+      cmd_vel_.x = value;
+      cmd_vel_.w = value2;
+    }
     isMoving = true;
     pid_right.reset();
     pid_left.reset();
     Serial.println("ACK:F");
     break;
   case CMD_MOVE_BACKWARD:
-    // moveBackward(value > 0 ? value : 150);
-    cmd_vel_.x = -1.0;
-    cmd_vel_.w = 0.0;
+    if (value == 0 && value2 == 0)
+    {
+      cmd_vel_.x = -1.0;
+      cmd_vel_.w = 0.0;
+    }
+    else
+    {
+      cmd_vel_.x = value;
+      cmd_vel_.w = value2;
+    }
     isMoving = true;
     pid_right.reset();
     pid_left.reset();
     Serial.println("ACK:B");
     break;
   case CMD_TURN_RIGHT:
-    // turnRight(value > 0 ? value : 150);
-    // isMoving = true;
-    // turn90degrees_imu(true, value > 0 ? value : 200);
-    // turn90degrees(true, value > 0 ? value : 225);
-    cmd_vel_.x = 0.0;
-    cmd_vel_.w = -4.0;
+    if (value == 0 && value2 == 0)
+    {
+      cmd_vel_.x = 0.0;
+      cmd_vel_.w = -4.0;
+    }
+    else
+    {
+      cmd_vel_.x = value;
+      cmd_vel_.w = value2;
+    }
 
     isMoving = false; // after turn stop
     Serial.println("ACK:R");
@@ -152,12 +181,16 @@ void processCmd()
     pid_left.reset();
     break;
   case CMD_TURN_LEFT:
-    // turnLeft(value > 0 ? value : 150);
-    // isMoving = true;
-    // turn90degrees_imu(false, value > 0 ? value : 200);
-    // turn90degrees(false, value > 0 ? value : 225);
-    cmd_vel_.x = 0.0;
-    cmd_vel_.w = 4.0;
+    if (value == 0 && value2 == 0)
+    {
+      cmd_vel_.x = 0.0;
+      cmd_vel_.w = 4.0;
+    }
+    else
+    {
+      cmd_vel_.x = value;
+      cmd_vel_.w = value2;
+    }
     isMoving = false; // after turn stop
     Serial.println("ACK:L");
     pid_right.reset();
@@ -216,6 +249,8 @@ void processCmd()
     Serial.println(cmd_buffer);
     break;
   }
+  int value = 0;
+  int value2 = 0;
 }
 
 // Setup function to be called from main.cpp
