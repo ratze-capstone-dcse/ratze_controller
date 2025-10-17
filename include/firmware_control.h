@@ -218,8 +218,10 @@ void processCmd()
     Serial.println("ACK:E");
     break;
   case CMD_RESET_IMU:
+    init_imu();
+    update_imu();
     // heading_offset = heading;
-    // Serial.println("ACK:C");
+    Serial.println("ACK:C");
     break;
   case CMD_KP:
     MOTOR_DRIVER_PID_KP = value;
