@@ -142,6 +142,10 @@ void processCmd()
       cmd_vel_.x = value;
       cmd_vel_.w = value2;
     }
+    Serial.println("==========================");
+    Serial.println("CMD_X: " + String(value));
+    Serial.println("CMD_W: " + String(value2));
+    Serial.println("==========================");
     isMoving = true;
     pid_right.reset();
     pid_left.reset();
