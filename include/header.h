@@ -35,10 +35,11 @@
 #define TICKS_PER_REV 100
 #define WHEEL_RADIUS 0.035 // in meters (30mm)
 #define WHEEL_BASE 0.15   // in meters (distance between front and rear wheels)
+#define WHEEL_TRACK 0.26
 #define TURN_90_COUNTS ((WHEEL_BASE) / (4 * WHEEL_RADIUS * 2) * TICKS_PER_REV)
 
-PID pid_right(50.0, 10.0, 0.0);
-PID pid_left(50.0, 10.0, 0.0); 
+PID pid_right(80.0, 10.0, 30.0);
+PID pid_left(80.0, 10.0, 30.0); 
 
 int MOTOR_DRIVER_PID_KP = 200.0;
 int MOTOR_DRIVER_PID_KI = 70.0;

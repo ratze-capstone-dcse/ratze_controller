@@ -11,9 +11,9 @@ void update_pid_gain()
 
 void compute_wheel_speeds_()
 {
-  float v_r = (2 * cmd_vel_.x + cmd_vel_.w * WHEEL_BASE) /
+  float v_r = (2 * cmd_vel_.x + cmd_vel_.w * WHEEL_TRACK) /
               (2 * WHEEL_RADIUS);
-  float v_l = (2 * cmd_vel_.x - cmd_vel_.w * WHEEL_BASE) /
+  float v_l = (2 * cmd_vel_.x - cmd_vel_.w * WHEEL_TRACK) /
               (2 * WHEEL_RADIUS);
 
   // Serial.println("Wheel Speeds (rad/s): Right: " + String(v_r, 2) + " | Left: " + String(v_l, 2));
@@ -25,13 +25,13 @@ void compute_wheel_speeds_()
   bound(v_r, -MOTOR_MAX_VELOCITY, MOTOR_MAX_VELOCITY);
   bound(v_l, -MOTOR_MAX_VELOCITY, MOTOR_MAX_VELOCITY);
 
-  pid_right.set_setpoint(v_r);
-  pid_left.set_setpoint(v_l);
+  pid_right.set_setpoint(v_r, false);
+  pid_left.set_setpoint(v_l, false);
 }
 
 inline float apply_deadband(float pwm)
 {
-  if (fabs(pwm) < 50.0f)
+  if (fabs(pwm) < 100.0f)
   {
     return 0.0f;
   }
@@ -70,27 +70,7 @@ void motor_loop()
   auto pwm_motor_right = static_cast<int>(error_motor_right);
   auto pwm_motor_left = static_cast<int>(error_motor_left);
 
-  if (pwm_motor_right > 0 && pwm_motor_left > 0)
-  {
-    moveForward(abs(pwm_motor_left), abs(pwm_motor_right));
-  }
-  else if (pwm_motor_right < 0 && pwm_motor_left > 0)
-  {
-    turnRight(abs(pwm_motor_left), abs(pwm_motor_right));
-  }
-  else if (pwm_motor_right > 0 && pwm_motor_left < 0)
-  {
-    turnLeft(abs(pwm_motor_left), abs(pwm_motor_right));
-  }
-  else if (pwm_motor_right < 0 && pwm_motor_left < 0)
-  {
-    moveBackward(min(abs(pwm_motor_right), abs(pwm_motor_left)));
-  }
-  else
-  {
-    moveStop();
-  }
+  sendPWM(pwm_motor_left, pwm_motor_right);
 
   Serial.println("PWM Right: " + String(pwm_motor_right) + " | PWM Left: " + String(pwm_motor_left));
-  // send_pwm(pwm_motor_left, pwm_motor_right});
 }

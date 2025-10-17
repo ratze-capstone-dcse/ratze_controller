@@ -207,11 +207,69 @@ void turnRight(int left, int right)
   analogWrite(EN_M4, left);
 }
 
-void send_pwm(float left, float right) {
-  analogWrite(EN_M1, left);
-  analogWrite(EN_M2, right);
-  analogWrite(EN_M3, left);
-  analogWrite(EN_M4, right);
+void sendPWM(int left, int right) {
+  // Determine motor directions based on PWM signs
+  if (right > 0 && left > 0) {
+    // Forward
+    digitalWrite(M1_IN1, HIGH);
+    digitalWrite(M1_IN2, LOW);
+    digitalWrite(M2_IN1, HIGH);
+    digitalWrite(M2_IN2, LOW);
+    digitalWrite(M3_IN1, LOW);
+    digitalWrite(M3_IN2, HIGH);
+    digitalWrite(M4_IN1, LOW);
+    digitalWrite(M4_IN2, HIGH);
+  }
+  else if (right < 0 && left > 0) {
+    // Turn right
+    digitalWrite(M1_IN1, LOW);
+    digitalWrite(M1_IN2, HIGH);
+    digitalWrite(M2_IN1, HIGH);
+    digitalWrite(M2_IN2, LOW);
+    digitalWrite(M3_IN1, HIGH);
+    digitalWrite(M3_IN2, LOW);
+    digitalWrite(M4_IN1, LOW);
+    digitalWrite(M4_IN2, HIGH);
+  }
+  else if (right > 0 && left < 0) {
+    // Turn left
+    digitalWrite(M1_IN1, HIGH);
+    digitalWrite(M1_IN2, LOW);
+    digitalWrite(M2_IN1, LOW);
+    digitalWrite(M2_IN2, HIGH);
+    digitalWrite(M3_IN1, LOW);
+    digitalWrite(M3_IN2, HIGH);
+    digitalWrite(M4_IN1, HIGH);
+    digitalWrite(M4_IN2, LOW);
+  }
+  else if (right < 0 && left < 0) {
+    // Backward
+    digitalWrite(M1_IN1, LOW);
+    digitalWrite(M1_IN2, HIGH);
+    digitalWrite(M2_IN1, LOW);
+    digitalWrite(M2_IN2, HIGH);
+    digitalWrite(M3_IN1, HIGH);
+    digitalWrite(M3_IN2, LOW);
+    digitalWrite(M4_IN1, HIGH);
+    digitalWrite(M4_IN2, LOW);
+  }
+  else {
+    // Stop
+    digitalWrite(M1_IN1, LOW);
+    digitalWrite(M1_IN2, LOW);
+    digitalWrite(M2_IN1, LOW);
+    digitalWrite(M2_IN2, LOW);
+    digitalWrite(M3_IN1, LOW);
+    digitalWrite(M3_IN2, LOW);
+    digitalWrite(M4_IN1, LOW);
+    digitalWrite(M4_IN2, LOW);
+  }
+
+  // Set PWM speeds
+  analogWrite(EN_M1, abs(right));
+  analogWrite(EN_M2, abs(left));
+  analogWrite(EN_M3, abs(right));
+  analogWrite(EN_M4, abs(left));
 }
 
 void moveStop()

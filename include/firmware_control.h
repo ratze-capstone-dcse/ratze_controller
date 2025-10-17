@@ -41,13 +41,6 @@ bool isMoving = false;
 int currentSpeed = 0;
 static long long targetCounts = 0;
 
-// 90 degree turn calculation with encoders
-#define COUNTS_PER_REV 100
-#define WHEEL_RADIUS 0.035 // in meters (30mm)
-#define WHEEL_BASE 0.145   // in meters (distance between left and right wheels) 14,5cm
-
-#define TURN_90_COUNTS ((WHEEL_BASE) / (4 * WHEEL_RADIUS * 2) * COUNTS_PER_REV)
-
 void sendSensorData()
 {
   // send imu data
