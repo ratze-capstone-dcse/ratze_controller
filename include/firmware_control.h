@@ -120,12 +120,12 @@ void processCmd()
 
   if (cmd_index > 2 && cmd_buffer[1] == ':')
   {
-    value = atoi(cmd_buffer + 2);
+    value = atof(cmd_buffer + 2);
     // Check for second value after another colon
     char *colon_pos = strchr(cmd_buffer + 2, ':');
     if (colon_pos != nullptr)
     {
-      value2 = atoi(colon_pos + 1);
+      value2 = atof(colon_pos + 1);
     }
   }
 
