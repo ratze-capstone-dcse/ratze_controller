@@ -115,8 +115,8 @@ void setMotorSpeed(int speed)
 void processCmd()
 {
   char cmd = cmd_buffer[0];
-  int value = 0;
-  int value2 = 0;
+  float value = 0;
+  float value2 = 0;
 
   if (cmd_index > 2 && cmd_buffer[1] == ':')
   {
