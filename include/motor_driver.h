@@ -317,6 +317,10 @@ void resetEncoders()
   countM2_ = 0;
   countM3_ = 0;
   countM4_ = 0;
+  last_encoder_reading_.M1 = countM1_;
+  last_encoder_reading_.M2 = countM2_;
+  last_encoder_reading_.M3 = countM3_;
+  last_encoder_reading_.M4 = countM4_;
   interrupts();
 }
 

@@ -21,7 +21,7 @@
 #define CMD_SET_SPEED 'V'
 #define CMD_GET_SENSORS 'G'
 #define CMD_RESET_ENCODERS 'E'
-#define CMD_CALIBRATE_HEADING 'C'
+#define CMD_RESET_IMU 'C'
 #define CMD_KP 'P'
 #define CMD_KI 'I'
 #define CMD_KD 'D'
@@ -178,9 +178,13 @@ void processCmd()
     break;
   case CMD_RESET_ENCODERS:
     resetEncoders();
+    cmd_vel_.x = 0.0;
+    cmd_vel_.w = 0.0;
+    pid_right.reset();
+    pid_left.reset();
     Serial.println("ACK:E");
     break;
-  case CMD_CALIBRATE_HEADING:
+  case CMD_RESET_IMU:
     // heading_offset = heading;
     // Serial.println("ACK:C");
     break;
