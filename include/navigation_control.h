@@ -25,7 +25,7 @@
 #define TURN_TOLERANCE_DEG 2.0f      // Acceptable error in degrees
 #define TURN_TOLERANCE_RAD 0.0349f   // ~2 degrees in radians
 #define TURN_TIMEOUT_MS 5000         // Maximum time for a turn (ms)
-#define TURN_SPEED 0.5f              // Angular velocity for turning (rad/s)
+#define TURN_SPEED_PWM 150           // PWM speed for turning (0-255)
 
 // Angle constants
 #define DEG_TO_RAD_FACTOR (PI / 180.0f)
@@ -194,7 +194,7 @@ void apply_centering_correction(float correction,
 // ========================================
 
 /**
- * @brief Perform a discrete turn using encoder and IMU fusion
+ * @brief Perform a discrete turn using IMU feedback (no PID, direct PWM control)
  * @param target_angle_deg Target angle in degrees (positive = left, negative = right)
  * @return true if turn completed successfully, false if timeout or error
  */
@@ -209,43 +209,31 @@ bool discrete_turn(float target_angle_deg) {
     
     // Record initial state
     float initial_yaw = rad_yaw;
-    long initial_encoder_left = countM2_;  // Left motors (M2, M4)
-    long initial_encoder_right = countM1_; // Right motors (M1, M3)
     
     // Calculate target heading
     float target_yaw = normalize_angle(initial_yaw + target_angle_rad);
-    
-    // Calculate expected encoder change
-    long expected_ticks = angle_to_ticks(target_angle_rad);
     
     Serial.print("Initial yaw: ");
     Serial.print(rad_to_deg(initial_yaw), 2);
     Serial.print(" deg | Target yaw: ");
     Serial.print(rad_to_deg(target_yaw), 2);
     Serial.println(" deg");
-    Serial.print("Expected encoder ticks: ");
-    Serial.println(expected_ticks);
     
-    // Stop any current motion and reset PIDs
-    cmd_vel_.x = 0.0;
-    cmd_vel_.w = 0.0;
-    pid_right.reset();
-    pid_left.reset();
-    delay(50);
-    
-    // Set turn command based on direction
-    if (target_angle_rad > 0) {
-        // Turn left (counter-clockwise)
-        cmd_vel_.x = 0.0;
-        cmd_vel_.w = TURN_SPEED;
-    } else {
-        // Turn right (clockwise)
-        cmd_vel_.x = 0.0;
-        cmd_vel_.w = -TURN_SPEED;
-    }
+    // Stop any current motion
+    moveStop();
+    delay(20);
     
     unsigned long start_time = millis();
     bool turn_complete = false;
+    
+    // Determine turn direction and set motor speeds
+    if (target_angle_rad > 0) {
+        // Turn left (counter-clockwise)
+        Serial.println("Turning LEFT");
+    } else {
+        // Turn right (clockwise)
+        Serial.println("Turning RIGHT");
+    }
     
     // Main turning loop
     while (!turn_complete && (millis() - start_time < TURN_TIMEOUT_MS)) {
@@ -256,45 +244,29 @@ bool discrete_turn(float target_angle_deg) {
         float current_error = normalize_angle(target_yaw - rad_yaw);
         float error_deg = rad_to_deg(fabs(current_error));
         
-        // Get encoder progress
-        long encoder_left_change = abs(countM2_ - initial_encoder_left);
-        long encoder_right_change = abs(countM1_ - initial_encoder_right);
-        long avg_encoder_change = (encoder_left_change + encoder_right_change) / 2;
-        
-        // Calculate completion percentage using weighted fusion
-        float imu_progress = 1.0f - (fabs(current_error) / fabs(target_angle_rad));
-        float encoder_progress = (float)avg_encoder_change / (float)expected_ticks;
-        
-        // Fuse IMU and encoder data (70% IMU, 30% encoder for better accuracy)
-        float fused_progress = 0.7f * imu_progress + 0.3f * encoder_progress;
-        bound_value(fused_progress, 0.0f, 1.0f);
-        
-        // Slow down as we approach target
-        if (fused_progress > 0.8f) {
-            // Reduce speed to 40% for final approach
-            float reduced_speed = TURN_SPEED * 0.4f;
-            cmd_vel_.w = (target_angle_rad > 0) ? reduced_speed : -reduced_speed;
-        }
-        
         // Check if turn is complete
         if (error_deg < TURN_TOLERANCE_DEG) {
             turn_complete = true;
+            break;
         }
         
-        // Execute motor control
-        motor_loop();
+        // Apply constant PWM based on turn direction
+        if (target_angle_rad > 0) {
+            // Turn left: left motors backward, right motors forward
+            turnLeft(TURN_SPEED_PWM, TURN_SPEED_PWM);
+        } else {
+            // Turn right: left motors forward, right motors backward
+            turnRight(TURN_SPEED_PWM, TURN_SPEED_PWM);
+        }
         
         // Debug output every 100ms
         static unsigned long last_debug = 0;
         if (millis() - last_debug > 100) {
-            Serial.print("Error: ");
+            Serial.print("Current yaw: ");
+            Serial.print(rad_to_deg(rad_yaw), 2);
+            Serial.print(" deg | Error: ");
             Serial.print(error_deg, 2);
-            Serial.print(" deg | Progress: ");
-            Serial.print(fused_progress * 100.0f, 1);
-            Serial.print("% | Encoders: ");
-            Serial.print(avg_encoder_change);
-            Serial.print("/");
-            Serial.println(expected_ticks);
+            Serial.println(" deg");
             last_debug = millis();
         }
         
@@ -302,10 +274,6 @@ bool discrete_turn(float target_angle_deg) {
     }
     
     // Stop turning
-    cmd_vel_.x = 0.0;
-    cmd_vel_.w = 0.0;
-    pid_right.reset();
-    pid_left.reset();
     moveStop();
     
     // Final error check
