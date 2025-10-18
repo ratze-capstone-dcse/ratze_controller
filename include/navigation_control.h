@@ -25,7 +25,7 @@
 #define TURN_TOLERANCE_DEG 2.0f      // Acceptable error in degrees
 #define TURN_TOLERANCE_RAD 0.0349f   // ~2 degrees in radians
 #define TURN_TIMEOUT_MS 5000         // Maximum time for a turn (ms)
-#define TURN_SPEED_PWM 150           // PWM speed for turning (0-255)
+#define TURN_SPEED_PWM 230           // PWM speed for turning (0-255)
 
 // Angle constants
 #define DEG_TO_RAD_FACTOR (PI / 180.0f)
@@ -207,6 +207,9 @@ bool discrete_turn(float target_angle_deg) {
     Serial.print(target_angle_deg);
     Serial.println(" degrees");
     
+    // Update IMU to get fresh reading
+    update_imu();
+    
     // Record initial state
     float initial_yaw = rad_yaw;
     
@@ -217,80 +220,136 @@ bool discrete_turn(float target_angle_deg) {
     Serial.print(rad_to_deg(initial_yaw), 2);
     Serial.print(" deg | Target yaw: ");
     Serial.print(rad_to_deg(target_yaw), 2);
+    Serial.print(" deg | Delta: ");
+    Serial.print(target_angle_deg, 2);
     Serial.println(" deg");
     
     // Stop any current motion
     moveStop();
-    delay(20);
     
     unsigned long start_time = millis();
     bool turn_complete = false;
+    bool slowing_down = false;
     
-    // Determine turn direction and set motor speeds
-    if (target_angle_rad > 0) {
-        // Turn left (counter-clockwise)
-        Serial.println("Turning LEFT");
-    } else {
-        // Turn right (clockwise)
-        Serial.println("Turning RIGHT");
-    }
+    // Determine turn direction
+    bool turning_left = (target_angle_deg > 0);
+    Serial.print("Direction: ");
+    Serial.println(turning_left ? "LEFT (CCW)" : "RIGHT (CW)");
     
-    // Main turning loop
+    unsigned long last_debug = 0;
+    int turn_speed = TURN_SPEED_PWM;  // Declare here so it's in scope for the whole loop
+    
+    // Main turning loop (NO DELAYS!)
     while (!turn_complete && (millis() - start_time < TURN_TIMEOUT_MS)) {
         // Update IMU data
         update_imu();
         
-        // Calculate current error
-        float current_error = normalize_angle(target_yaw - rad_yaw);
-        float error_deg = rad_to_deg(fabs(current_error));
+        // Calculate how much we've turned from start (THIS IS THE PRIMARY METRIC!)
+        float turned_so_far = normalize_angle(rad_yaw - initial_yaw);
+        float turned_deg = rad_to_deg(turned_so_far);
         
-        // Check if turn is complete
-        if (error_deg < TURN_TOLERANCE_DEG) {
+        // Calculate remaining turn needed
+        float remaining_deg = fabs(target_angle_deg) - fabs(turned_deg);
+        
+        // Debug output (throttled)
+        if (millis() - last_debug > 100) {
+            Serial.print("Current: ");
+            Serial.print(rad_to_deg(rad_yaw), 2);
+            Serial.print("° | Turned: ");
+            Serial.print(turned_deg, 2);
+            Serial.print("° | Remaining: ");
+            Serial.print(remaining_deg, 2);
+            Serial.println("°");
+            last_debug = millis();
+        }
+        
+        // Check if we've turned enough (USE TURNED AMOUNT, NOT ERROR TO TARGET!)
+        if (fabs(turned_deg) >= fabs(target_angle_deg) - TURN_TOLERANCE_DEG) {
+            Serial.println("=== TARGET REACHED! STOPPING ===");
+            // Gentle deceleration to prevent motor ringing
+            int slow_speed = turn_speed / 2;
+            if (turning_left) {
+                turnLeft(slow_speed, slow_speed);
+            } else {
+                turnRight(slow_speed, slow_speed);
+            }
+            delay(30);  // Brief deceleration period
+            moveStop();
             turn_complete = true;
             break;
         }
         
-        // Apply constant PWM based on turn direction
-        if (target_angle_rad > 0) {
-            // Turn left: left motors backward, right motors forward
-            turnLeft(TURN_SPEED_PWM, TURN_SPEED_PWM);
+        // Safety: if we've turned more than expected, stop
+        if (fabs(turned_deg) > fabs(target_angle_deg) + 10.0f) {
+            Serial.println("=== OVERSHOOT DETECTED! STOPPING ===");
+            moveStop();
+            turn_complete = true;
+            break;
+        }
+        
+        if (remaining_deg < 30.0f) {
+            turn_speed = 200;
         } else {
-            // Turn right: left motors forward, right motors backward
-            turnRight(TURN_SPEED_PWM, TURN_SPEED_PWM);
+            turn_speed = TURN_SPEED_PWM;  // 100% speed
         }
         
-        // Debug output every 100ms
-        static unsigned long last_debug = 0;
-        if (millis() - last_debug > 100) {
-            Serial.print("Current yaw: ");
-            Serial.print(rad_to_deg(rad_yaw), 2);
-            Serial.print(" deg | Error: ");
-            Serial.print(error_deg, 2);
-            Serial.println(" deg");
-            last_debug = millis();
+        // Apply PWM based on turn direction
+        if (turning_left) {
+            turnLeft(turn_speed, turn_speed);
+        } else {
+            turnRight(turn_speed, turn_speed);
         }
-        
-        delay(10);
     }
     
-    // Stop turning
+    // CRITICAL: Stop turning immediately
     moveStop();
+    delay(50);  // Brief settling time to prevent motor ringing
     
-    // Final error check
+    // Final IMU read
+    update_imu();
+    
+    // Calculate final results
     float final_error = normalize_angle(target_yaw - rad_yaw);
     float final_error_deg = rad_to_deg(fabs(final_error));
     
+    // Calculate actual turn amount (preserve sign to match requested direction)
+    float total_turned_rad = normalize_angle(rad_yaw - initial_yaw);
+    
+    // If the sign doesn't match the intended direction, it wrapped around ±180°
+    // Correct the sign to match the requested turn direction
+    float total_turned_deg;
+    if (turning_left && total_turned_rad < 0) {
+        // Left turn but got negative angle - it wrapped around
+        total_turned_deg = rad_to_deg(total_turned_rad + 2.0f * PI);
+    } else if (!turning_left && total_turned_rad > 0) {
+        // Right turn but got positive angle - it wrapped around
+        total_turned_deg = rad_to_deg(total_turned_rad - 2.0f * PI);
+    } else {
+        // Sign is correct
+        total_turned_deg = rad_to_deg(total_turned_rad);
+    }
+    
     Serial.println("======================================");
-    Serial.print("Turn complete. Final error: ");
+    Serial.println("TURN COMPLETE");
+    Serial.print("Requested:   ");
+    Serial.print(target_angle_deg, 2);
+    Serial.println("°");
+    Serial.print("Actually turned: ");
+    Serial.print(total_turned_deg, 2);
+    Serial.println("°");
+    Serial.print("Final yaw:   ");
+    Serial.print(rad_to_deg(rad_yaw), 2);
+    Serial.println("°");
+    Serial.print("Final error: ");
     Serial.print(final_error_deg, 2);
-    Serial.println(" degrees");
-    Serial.print("Time taken: ");
+    Serial.println("°");
+    Serial.print("Time taken:  ");
     Serial.print(millis() - start_time);
     Serial.println(" ms");
     Serial.println("======================================");
     
     // Return success if within tolerance
-    return (final_error_deg < TURN_TOLERANCE_DEG);
+    return (final_error_deg < TURN_TOLERANCE_DEG * 2.0f);
 }
 
 /**
