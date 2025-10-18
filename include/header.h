@@ -56,6 +56,8 @@ TimerAPI motor_update_timer_(hz_to_ms(50));
 
 #define MOTOR_MAX_VELOCITY 1.0 // Maximum velocity in m/s
 
+bool flag_forward_ = false;
+
 struct
 {
     float x;
