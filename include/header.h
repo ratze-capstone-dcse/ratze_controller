@@ -56,6 +56,20 @@ TimerAPI motor_update_timer_(hz_to_ms(50));
 
 #define MOTOR_MAX_VELOCITY 1.0 // Maximum velocity in m/s
 
+// Wall following parameters
+#define LOOP_MS 20                // Main loop period in ms (50Hz)
+#define ALPHA 0.3                 // Low-pass filter coefficient (0-1, higher = more responsive)
+#define FRONT_THRESHOLD 300       // Front wall detection threshold in mm
+#define SIDE_WALL_THRESHOLD 200   // Side wall detection threshold in mm (no wall if > this)
+#define BASE_SPEED 150            // Base motor speed (0-255)
+#define TURN_SPEED 200            // Speed when turning to find wall
+#define MAX_CORR 80               // Maximum correction value
+#define Kp 0.5                    // Proportional gain for wall following
+const int TURN_DELAY = 400;       // 90-degree turn duration in ms
+const int RIGHT_TURN_DURATION = 300;  // Duration for right turn when no wall (ms)
+const int LEFT_TURN_DURATION = 300;   // Duration for left turn when no wall (ms)
+
+
 struct
 {
     float x;

@@ -26,12 +26,33 @@
 #define CMD_KI 'I'
 #define CMD_KD 'D'
 #define CMD_INFO 'Q'
+#define CMD_WALL_FOLLOW 'W'
 
 // Tof Setup
 #define TCA9548A_ADDR 0x70
 #define NUM_SENSORS 7
 // Adafruit_VL53L0X tof_sensors[NUM_SENSORS];
 // uint16_t tof_distances[NUM_SENSORS];
+
+
+
+// Wall following state variables
+bool wallFollowEnabled = false;
+unsigned long lastWallFollowMillis = 0;
+float filtL = 0.0;                // Filtered left sensor reading
+float filtR = 0.0;                // Filtered right sensor reading
+
+// Turn state management
+enum TurnState {
+  TURN_NONE,
+  TURN_RIGHT,
+  TURN_LEFT,
+  TURN_FRONT
+};
+
+TurnState currentTurnState = TURN_NONE;
+unsigned long turnStartTime = 0;
+int turnDuration = 0;
 
 // command processing variables
 char cmd_buffer[64];
@@ -103,6 +124,129 @@ void setMotorSpeed(int speed)
 
   currentSpeed = speed;
   isMoving = true;
+}
+
+void wallFollowingLoop()
+{
+  unsigned long now = millis();
+  
+  // Check if we're currently executing a turn
+  if (currentTurnState != TURN_NONE)
+  {
+    unsigned long elapsed = now - turnStartTime;
+    
+    if (elapsed < turnDuration)
+    {
+      // Continue turning
+      switch (currentTurnState)
+      {
+        case TURN_RIGHT:
+          sendPWM(-TURN_SPEED, TURN_SPEED);
+          break;
+        case TURN_LEFT:
+          sendPWM(TURN_SPEED, -TURN_SPEED);
+          break;
+        case TURN_FRONT:
+          sendPWM(225, -225); // Front 90-degree turn
+          break;
+        default:
+          break;
+      }
+      return; // Stay in turn mode
+    }
+    else
+    {
+      // Turn complete
+      Serial.print("Turn complete: ");
+      Serial.println(currentTurnState == TURN_RIGHT ? "RIGHT" : 
+                     currentTurnState == TURN_LEFT ? "LEFT" : "FRONT");
+      sendPWM(0, 0);
+      delay(50); // Brief pause after turn
+      currentTurnState = TURN_NONE;
+      
+      // Reset filters after turn
+      filtL = 0;
+      filtR = 0;
+      return;
+    }
+  }
+  
+  // Normal control loop timing
+  if (now - lastWallFollowMillis < LOOP_MS)
+    return;
+  lastWallFollowMillis = now;
+
+  // Read sensor values (assuming sensor indices: 0=left, 2=right, 5=front)
+  // Adjust indices based on your actual sensor placement
+  int rawL = tof_distances[0]; // Left sensor
+  int rawR = tof_distances[2]; // Right sensor
+  int rawF = tof_distances[5]; // Front sensor
+
+  // Apply low-pass filter to reduce noise
+  filtL = ALPHA * rawL + (1.0 - ALPHA) * filtL;
+  filtR = ALPHA * rawR + (1.0 - ALPHA) * filtR;
+
+  // Debug output
+  Serial.print("WF: L=");
+  Serial.print(filtL);
+  Serial.print(" R=");
+  Serial.print(filtR);
+  Serial.print(" F=");
+  Serial.println(rawF);
+
+  // --- Front wall check (highest priority) ---
+  if (rawF < FRONT_THRESHOLD && rawF > 0)
+  {
+    Serial.println("Front wall detected - initiating left turn");
+    currentTurnState = TURN_FRONT;
+    turnStartTime = now;
+    turnDuration = TURN_DELAY;
+    sendPWM(0, 0); // Stop first
+    delay(100);
+    turnStartTime = millis(); // Reset after delay
+    return;
+  }
+
+  // --- Wall detection logic ---
+  // Check if walls are detected on left and right
+  bool hasRightWall = (filtR > 0 && filtR < SIDE_WALL_THRESHOLD);
+  bool hasLeftWall = (filtL > 0 && filtL < SIDE_WALL_THRESHOLD);
+
+  // Priority: No right wall -> turn right
+  if (!hasRightWall)
+  {
+    Serial.println("No right wall - initiating right turn");
+    currentTurnState = TURN_RIGHT;
+    turnStartTime = now;
+    turnDuration = RIGHT_TURN_DURATION;
+    return;
+  }
+  // Second priority: No left wall -> turn left
+  else if (!hasLeftWall)
+  {
+    Serial.println("No left wall - initiating left turn");
+    currentTurnState = TURN_LEFT;
+    turnStartTime = now;
+    turnDuration = LEFT_TURN_DURATION;
+    return;
+  }
+  // Both walls present: Wall following mode
+  else
+  {
+    // --- Normal wall following ---
+    // Error is positive when too close to right wall (need to turn left)
+    float error = filtR - filtL;
+    float corr = Kp * error;
+    corr = constrain(corr, -MAX_CORR, MAX_CORR);
+
+    // Apply correction: add to left, subtract from right to turn away from right wall
+    int leftPWM = BASE_SPEED + corr;
+    int rightPWM = BASE_SPEED - corr;
+    leftPWM = constrain(leftPWM, 0, 255);
+    rightPWM = constrain(rightPWM, 0, 255);
+
+    sendPWM(leftPWM, rightPWM);
+  }
 }
 
 void processCmd()
@@ -247,6 +391,25 @@ void processCmd()
     Serial.println("Current speed M2: " + String(velocity_.M2));
     Serial.println("==========================");
     break;
+  case CMD_WALL_FOLLOW:
+    if (value == 0)
+    {
+      wallFollowEnabled = false;
+      currentTurnState = TURN_NONE;
+      moveStop();
+      Serial.println("Wall following disabled");
+    }
+    else
+    {
+      wallFollowEnabled = true;
+      filtL = 0;
+      filtR = 0;
+      currentTurnState = TURN_NONE;
+      lastWallFollowMillis = millis();
+      Serial.println("Wall following enabled");
+    }
+    Serial.println("ACK:W");
+    break;
   default:
     Serial.print("ERR:Unknown command: ");
     Serial.println(cmd_buffer);
@@ -350,5 +513,11 @@ void loopFirmware()
   {
     motor_loop();
     last_motor_time = millis();
+  }
+
+  // Wall following control loop
+  if (wallFollowEnabled)
+  {
+    wallFollowingLoop();
   }
 }
