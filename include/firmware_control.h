@@ -6,6 +6,7 @@
 #include <motor_driver.h>
 #include <motor_control.h>
 #include <tof_main.h>
+#include <navigation_control.h>
 #include "header.h"
 
 // Serial communication parameters
@@ -26,6 +27,9 @@
 #define CMD_KI 'I'
 #define CMD_KD 'D'
 #define CMD_INFO 'Q'
+#define CMD_TURN 'T'             // Turn by specified angle: T:angle_deg
+#define CMD_CENTERING_ENABLE 'N' // Enable/disable centering: N:1 or N:0
+#define CMD_SET_KP_CENTER 'K'    // Set centering Kp: K:value
 
 // Tof Setup
 #define TCA9548A_ADDR 0x70
@@ -40,6 +44,7 @@ unsigned long last_cmd_time = 0;
 bool isMoving = false;
 int currentSpeed = 0;
 static long long targetCounts = 0;
+bool centering_enabled = true; // Enable wall centering by default
 
 void sendSensorData()
 {
@@ -125,20 +130,21 @@ void processCmd()
   switch (cmd)
   {
   case CMD_MOVE_FORWARD:
-    if (value == 0 && value2 == 0)
-    {
-      cmd_vel_.x = 1.0;
-      cmd_vel_.w = 0.0;
-    }
-    else
-    {
-      cmd_vel_.x = value;
-      cmd_vel_.w = value2;
-    }
-    Serial.println("==========================");
-    Serial.println("CMD_X: " + String(value));
-    Serial.println("CMD_W: " + String(value2));
-    Serial.println("==========================");
+    // if (value == 0 && value2 == 0)
+    // {
+    //   cmd_vel_.x = 1.0;
+    //   cmd_vel_.w = 0.0;
+    // }
+    // else
+    // {
+    //   cmd_vel_.x = value;
+    //   cmd_vel_.w = value2;
+    // }
+    // Serial.println("==========================");
+    // Serial.println("CMD_X: " + String(value));
+    // Serial.println("CMD_W: " + String(value2));
+    // Serial.println("==========================");
+    flag_forward_ = true;
     isMoving = true;
     pid_right.reset();
     pid_left.reset();
@@ -161,44 +167,97 @@ void processCmd()
     Serial.println("ACK:B");
     break;
   case CMD_TURN_RIGHT:
-    if (value == 0 && value2 == 0)
+    // Discrete turn right command: R or R:angle_deg
+    if (value == 0)
     {
-      cmd_vel_.x = 0.0;
-      cmd_vel_.w = -4.0;
+      // Default 90 degree right turn
+      Serial.println("==========================");
+      Serial.println("Executing right turn: 90 degrees");
+      Serial.println("==========================");
+      
+      bool success = discrete_turn(-90.0f);
+      
+      if (success)
+      {
+        Serial.println("ACK:R:SUCCESS");
+      }
+      else
+      {
+        Serial.println("ACK:R:FAILED");
+      }
     }
     else
     {
-      cmd_vel_.x = value;
-      cmd_vel_.w = value2;
+      // Custom angle right turn (value should be positive, will be negated)
+      Serial.println("==========================");
+      Serial.print("Executing right turn: ");
+      Serial.print(value);
+      Serial.println(" degrees");
+      Serial.println("==========================");
+      
+      bool success = discrete_turn(-value);  // Negate for right turn
+      
+      if (success)
+      {
+        Serial.println("ACK:R:SUCCESS");
+      }
+      else
+      {
+        Serial.println("ACK:R:FAILED");
+      }
     }
-
-    isMoving = false; // after turn stop
-    Serial.println("ACK:R");
-    pid_right.reset();
-    pid_left.reset();
+    isMoving = false;
     break;
+    
   case CMD_TURN_LEFT:
-    if (value == 0 && value2 == 0)
+    // Discrete turn left command: L or L:angle_deg
+    if (value == 0)
     {
-      cmd_vel_.x = 0.0;
-      cmd_vel_.w = 4.0;
+      // Default 90 degree left turn
+      Serial.println("==========================");
+      Serial.println("Executing left turn: 90 degrees");
+      Serial.println("==========================");
+      
+      bool success = discrete_turn(90.0f);
+      
+      if (success)
+      {
+        Serial.println("ACK:L:SUCCESS");
+      }
+      else
+      {
+        Serial.println("ACK:L:FAILED");
+      }
     }
     else
     {
-      cmd_vel_.x = value;
-      cmd_vel_.w = value2;
+      // Custom angle left turn (value should be positive)
+      Serial.println("==========================");
+      Serial.print("Executing left turn: ");
+      Serial.print(value);
+      Serial.println(" degrees");
+      Serial.println("==========================");
+      
+      bool success = discrete_turn(value);  // Positive for left turn
+      
+      if (success)
+      {
+        Serial.println("ACK:L:SUCCESS");
+      }
+      else
+      {
+        Serial.println("ACK:L:FAILED");
+      }
     }
-    isMoving = false; // after turn stop
-    Serial.println("ACK:L");
-    pid_right.reset();
-    pid_left.reset();
+    isMoving = false;
     break;
   case CMD_STOP:
     cmd_vel_.x = 0.0;
     cmd_vel_.w = 0.0;
-    pid_right.reset();
-    pid_left.reset();
-    // moveStop();
+    // pid_right.reset();
+    // pid_left.reset();
+    moveStop();
+    flag_forward_ = false;
     isMoving = false;
     Serial.println("ACK:S");
     break;
@@ -246,6 +305,49 @@ void processCmd()
     Serial.println("Current speed M1: " + String(velocity_.M1));
     Serial.println("Current speed M2: " + String(velocity_.M2));
     Serial.println("==========================");
+    break;
+  case CMD_TURN:
+    // Discrete turn command: T:angle_deg
+    if (value != 0)
+    {
+      Serial.println("==========================");
+      Serial.print("Executing discrete turn: ");
+      Serial.print(value);
+      Serial.println(" degrees");
+      Serial.println("==========================");
+
+      bool success = discrete_turn(value);
+
+      if (success)
+      {
+        Serial.println("ACK:T:SUCCESS");
+      }
+      else
+      {
+        Serial.println("ACK:T:FAILED");
+      }
+    }
+    else
+    {
+      Serial.println("ERR:T requires angle value (e.g., T:90)");
+    }
+    break;
+  case CMD_CENTERING_ENABLE:
+    // Enable/disable centering: N:1 or N:0
+    centering_enabled = (value != 0);
+    Serial.print("Centering control: ");
+    Serial.println(centering_enabled ? "ENABLED" : "DISABLED");
+    Serial.println("ACK:N");
+    break;
+  case CMD_SET_KP_CENTER:
+    // Set centering Kp gain: K:value
+    // Note: This requires making KP_CENTERING non-const
+    Serial.println("==========================");
+    Serial.print("Set centering Kp to ");
+    Serial.println(value);
+    Serial.println("==========================");
+    Serial.println("ACK:K");
+    // TODO: Implement if KP_CENTERING is made a variable
     break;
   default:
     Serial.print("ERR:Unknown command: ");
@@ -348,7 +450,9 @@ void loopFirmware()
   static unsigned long last_motor_time = 0;
   if (millis() - last_motor_time >= 10)
   {
-    motor_loop();
+    if (flag_forward_ == true) {
+      motor_loop_with_centering();
+    }
     last_motor_time = millis();
   }
 }
