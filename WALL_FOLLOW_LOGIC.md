@@ -32,22 +32,37 @@ The robot uses a state machine with timing-based turns:
 - `TURN_RIGHT` - Executing right turn (300ms)
 - `TURN_LEFT` - Executing left turn (300ms)
 - `TURN_FRONT` - Executing front wall 90° turn (400ms)
+- `MOVE_FORWARD_AFTER_TURN` - Moving forward after a turn to discover new walls (400ms)
 
 ### State Flow
 1. **Detect condition** (no wall, front wall, etc.)
 2. **Enter turn state** (set state, start time, duration)
 3. **Execute turn** (apply PWM for duration)
-4. **Exit turn state** (stop motors, reset filters, return to TURN_NONE)
-5. **Resume** normal wall following
+4. **Check post-turn conditions**:
+   - Read sensors (front, left, right)
+   - After RIGHT turn: Check if left wall appeared AND front is clear
+   - After LEFT turn: Check if right wall appeared AND front is clear
+   - After FRONT turn: Check if front is clear
+5. **Move forward (if conditions met)** or **Stop** (if conditions not met)
+6. **Return to TURN_NONE** and resume normal operation
+
+### Anti-Spin Logic
+The robot will **NOT move forward** after a turn if:
+- Front is blocked (rawF < FRONT_THRESHOLD)
+- After right turn: No left wall detected (opposite wall didn't appear)
+- After left turn: No right wall detected (opposite wall didn't appear)
+
+This prevents infinite turning when no walls are discovered!
 
 ## Behavior Summary
 
-| Condition | Action | Duration | PWM Command |
+| Condition | Action | Duration | Next Action |
 |-----------|--------|----------|-------------|
-| Front wall detected | Turn left 90° in place | 400ms | `sendPWM(225, -225)` |
-| No right wall | Turn right | 300ms | `sendPWM(-TURN_SPEED, TURN_SPEED)` |
-| No left wall | Turn left | 300ms | `sendPWM(TURN_SPEED, -TURN_SPEED)` |
-| Both walls present | Follow walls (centered) | Continuous | `sendPWM(BASE_SPEED+corr, BASE_SPEED-corr)` |
+| Front wall detected | Turn left 90° in place | 400ms | Check if front clear → Move forward or stop |
+| No right wall | Turn right | 300ms | Check if left wall appeared AND front clear → Move forward or stop |
+| No left wall | Turn left | 300ms | Check if right wall appeared AND front clear → Move forward or stop |
+| Both walls present | Follow walls (centered) | Continuous | Continue following |
+| After turn (conditions met) | Move forward | 400ms | Return to normal operation |
 
 ## Key Thresholds
 
@@ -58,6 +73,7 @@ The robot uses a state machine with timing-based turns:
 - **TURN_DELAY**: 400ms - Duration for front wall 90° turn
 - **RIGHT_TURN_DURATION**: 300ms - Duration for right turn
 - **LEFT_TURN_DURATION**: 300ms - Duration for left turn
+- **FORWARD_AFTER_TURN_DURATION**: 400ms - Forward movement after successful turn
 
 ## Sensor Indices (Adjust for your robot!)
 
@@ -77,11 +93,16 @@ WF: L=250 R=280 F=1500
 - R = Filtered right sensor reading (mm)
 - F = Raw front sensor reading (mm)
 
-Plus action and state messages:
+Plus detailed action and state messages:
 - "Front wall detected - initiating left turn"
 - "No right wall - initiating right turn"
 - "No left wall - initiating left turn"
 - "Turn complete: RIGHT" / "Turn complete: LEFT" / "Turn complete: FRONT"
+- "After turn - L=xxx R=xxx F=xxx"
+- "After RIGHT turn: frontClear=1 hasLeftWall=1"
+- "Front is clear - moving forward"
+- "Cannot move forward - front blocked or no wall detected"
+- "Forward movement complete"
 - (Silent when following both walls)
 
 ## Typical Maze Navigation
@@ -93,16 +114,44 @@ Both walls present → Center between them
 Front wall appears → Turn left 90°
 ```
 
-### Scenario 2: Open Intersection
+### Scenario 2: Open Intersection (Anti-Spin Logic Active)
 ```
-No right wall → Turn right immediately
-(Robot will explore right-hand paths first)
+No right wall detected → Turn right
+After turn: Check sensors
+  - Front clear? YES
+  - Left wall appeared? YES
+  → Move forward 400ms
+Return to wall following → Now both walls present
 ```
 
-### Scenario 3: Dead End
+### Scenario 3: Dead End (Anti-Spin Logic Active)
 ```
 Front wall detected → Turn left 90°
-Check walls again → Continue based on new orientation
+After turn: Check sensors
+  - Front clear? YES
+  → Move forward 400ms
+Continue navigating
+```
+
+### Scenario 4: Robot Prevents Infinite Spin
+```
+No right wall detected → Turn right 300ms
+After turn: Check sensors
+  - Front clear? NO (wall ahead)
+  → STOP, do not move forward
+  → Check walls again, make new decision
+```
+
+OR
+
+```
+No right wall detected → Turn right 300ms
+After turn: Check sensors
+  - Front clear? YES
+  - Left wall appeared? NO (still in open space)
+  → STOP, do not move forward
+  → Will detect no right wall again but won't spin endlessly
+  → Robot stays in place until conditions change
 ```
 
 ## Tuning Tips
@@ -174,3 +223,15 @@ G     # Get sensor readings
 - Adjust TURN_DELAY parameter (in header.h)
 - Use encoder counts for precise calibration
 - Test on actual maze walls and adjust timing
+
+**Robot spins indefinitely**
+- Check FORWARD_AFTER_TURN_DURATION (increase to 500-600ms)
+- Verify sensor readings after turn with debug output
+- Ensure SIDE_WALL_THRESHOLD is appropriate for your maze
+- Check that opposite wall is actually detected after turn
+
+**Robot doesn't move after turning**
+- This is normal if front is blocked or no wall detected!
+- Check debug: "Cannot move forward - front blocked or no wall detected"
+- Verify sensors are reading correctly
+- May need to adjust FRONT_THRESHOLD or SIDE_WALL_THRESHOLD

@@ -68,6 +68,7 @@ TimerAPI motor_update_timer_(hz_to_ms(50));
 const int TURN_DELAY = 400;       // 90-degree turn duration in ms
 const int RIGHT_TURN_DURATION = 300;  // Duration for right turn when no wall (ms)
 const int LEFT_TURN_DURATION = 300;   // Duration for left turn when no wall (ms)
+const int FORWARD_AFTER_TURN_DURATION = 400; // Duration to move forward after turn (ms)
 
 
 struct

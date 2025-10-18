@@ -47,12 +47,14 @@ enum TurnState {
   TURN_NONE,
   TURN_RIGHT,
   TURN_LEFT,
-  TURN_FRONT
+  TURN_FRONT,
+  MOVE_FORWARD_AFTER_TURN
 };
 
 TurnState currentTurnState = TURN_NONE;
 unsigned long turnStartTime = 0;
 int turnDuration = 0;
+TurnState previousTurnState = TURN_NONE; // Track what turn was just completed
 
 // command processing variables
 char cmd_buffer[64];
@@ -130,14 +132,14 @@ void wallFollowingLoop()
 {
   unsigned long now = millis();
   
-  // Check if we're currently executing a turn
+  // Check if we're currently executing a turn or forward movement
   if (currentTurnState != TURN_NONE)
   {
     unsigned long elapsed = now - turnStartTime;
     
     if (elapsed < turnDuration)
     {
-      // Continue turning
+      // Continue current action
       switch (currentTurnState)
       {
         case TURN_RIGHT:
@@ -149,25 +151,108 @@ void wallFollowingLoop()
         case TURN_FRONT:
           sendPWM(225, -225); // Front 90-degree turn
           break;
+        case MOVE_FORWARD_AFTER_TURN:
+          sendPWM(BASE_SPEED, BASE_SPEED); // Move forward
+          break;
         default:
           break;
       }
-      return; // Stay in turn mode
+      return; // Stay in current state
     }
     else
     {
-      // Turn complete
-      Serial.print("Turn complete: ");
-      Serial.println(currentTurnState == TURN_RIGHT ? "RIGHT" : 
-                     currentTurnState == TURN_LEFT ? "LEFT" : "FRONT");
-      sendPWM(0, 0);
-      delay(50); // Brief pause after turn
-      currentTurnState = TURN_NONE;
-      
-      // Reset filters after turn
-      filtL = 0;
-      filtR = 0;
-      return;
+      // Current action complete
+      if (currentTurnState == MOVE_FORWARD_AFTER_TURN)
+      {
+        // Forward movement after turn complete
+        Serial.println("Forward movement complete");
+        sendPWM(0, 0);
+        delay(50);
+        currentTurnState = TURN_NONE;
+        previousTurnState = TURN_NONE;
+        filtL = 0;
+        filtR = 0;
+        return;
+      }
+      else if (currentTurnState == TURN_RIGHT || currentTurnState == TURN_LEFT || currentTurnState == TURN_FRONT)
+      {
+        // Turn complete - check if we should move forward
+        Serial.print("Turn complete: ");
+        Serial.println(currentTurnState == TURN_RIGHT ? "RIGHT" : 
+                       currentTurnState == TURN_LEFT ? "LEFT" : "FRONT");
+        
+        sendPWM(0, 0);
+        delay(100); // Pause to let sensors update
+        
+        // Read current sensor values
+        int rawL = tof_distances[0];
+        int rawR = tof_distances[2];
+        int rawF = tof_distances[5];
+        
+        // Update filters with current readings
+        filtL = rawL;
+        filtR = rawR;
+        
+        Serial.print("After turn - L=");
+        Serial.print(rawL);
+        Serial.print(" R=");
+        Serial.print(rawR);
+        Serial.print(" F=");
+        Serial.println(rawF);
+        
+        // Store which turn we just completed
+        previousTurnState = currentTurnState;
+        
+        // Check conditions for moving forward after turn
+        bool frontIsClear = (rawF >= FRONT_THRESHOLD || rawF == 0);
+        bool shouldMoveForward = false;
+        
+        if (previousTurnState == TURN_RIGHT)
+        {
+          // After right turn, check if left wall appeared (opposite side)
+          bool hasLeftWall = (rawL > 0 && rawL < SIDE_WALL_THRESHOLD);
+          shouldMoveForward = frontIsClear && hasLeftWall;
+          Serial.print("After RIGHT turn: frontClear=");
+          Serial.print(frontIsClear);
+          Serial.print(" hasLeftWall=");
+          Serial.println(hasLeftWall);
+        }
+        else if (previousTurnState == TURN_LEFT)
+        {
+          // After left turn, check if right wall appeared (opposite side)
+          bool hasRightWall = (rawR > 0 && rawR < SIDE_WALL_THRESHOLD);
+          shouldMoveForward = frontIsClear && hasRightWall;
+          Serial.print("After LEFT turn: frontClear=");
+          Serial.print(frontIsClear);
+          Serial.print(" hasRightWall=");
+          Serial.println(hasRightWall);
+        }
+        else if (previousTurnState == TURN_FRONT)
+        {
+          // After front wall turn, always try to move forward if clear
+          shouldMoveForward = frontIsClear;
+          Serial.print("After FRONT turn: frontClear=");
+          Serial.println(frontIsClear);
+        }
+        
+        if (shouldMoveForward)
+        {
+          Serial.println("Front is clear - moving forward");
+          currentTurnState = MOVE_FORWARD_AFTER_TURN;
+          turnStartTime = millis();
+          turnDuration = FORWARD_AFTER_TURN_DURATION;
+        }
+        else
+        {
+          Serial.println("Cannot move forward - front blocked or no wall detected");
+          currentTurnState = TURN_NONE;
+          previousTurnState = TURN_NONE;
+          filtL = 0;
+          filtR = 0;
+        }
+        
+        return;
+      }
     }
   }
   
@@ -396,6 +481,7 @@ void processCmd()
     {
       wallFollowEnabled = false;
       currentTurnState = TURN_NONE;
+      previousTurnState = TURN_NONE;
       moveStop();
       Serial.println("Wall following disabled");
     }
@@ -405,6 +491,7 @@ void processCmd()
       filtL = 0;
       filtR = 0;
       currentTurnState = TURN_NONE;
+      previousTurnState = TURN_NONE;
       lastWallFollowMillis = millis();
       Serial.println("Wall following enabled");
     }
