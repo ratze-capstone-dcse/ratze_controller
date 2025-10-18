@@ -59,8 +59,8 @@ TimerAPI motor_update_timer_(hz_to_ms(50));
 // Wall following parameters
 #define LOOP_MS 20                // Main loop period in ms (50Hz)
 #define ALPHA 0.3                 // Low-pass filter coefficient (0-1, higher = more responsive)
-#define FRONT_THRESHOLD 200       // Front wall detection threshold in mm
-#define SIDE_WALL_THRESHOLD 300   // Side wall detection threshold in mm (no wall if > this)
+#define FRONT_THRESHOLD 300       // Front wall detection threshold in mm
+#define SIDE_WALL_THRESHOLD 400   // Side wall detection threshold in mm (no wall if > this)
 #define BASE_SPEED 150            // Base motor speed (0-255)
 #define TURN_SPEED 200            // Speed when turning to find wall
 #define MAX_CORR 50               // Maximum correction value
