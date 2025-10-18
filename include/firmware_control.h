@@ -67,10 +67,10 @@ void execute_turn_left()
   sendPWM(-TURN_SPEED, TURN_SPEED);
 }
 
-void execute_turn_front()
+void execute_turn_around()
 {
-  // Front wall turn (90-degree left turn)
-  sendPWM(-225, 225);
+  // 180-degree turn (same as left turn, just longer duration)
+  sendPWM(-TURN_SPEED, TURN_SPEED);
 }
 
 void execute_stop()

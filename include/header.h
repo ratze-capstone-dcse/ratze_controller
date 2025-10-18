@@ -59,9 +59,9 @@ TimerAPI motor_update_timer_(hz_to_ms(50));
 // Wall following parameters
 #define LOOP_MS 20                // Main loop period in ms (50Hz)
 #define ALPHA 0.3                 // Low-pass filter coefficient (0-1, higher = more responsive)
-#define FRONT_THRESHOLD 300       // Front wall detection threshold in mm
+#define FRONT_THRESHOLD 350       // Front wall detection threshold in mm (increased for safety)
 #define SIDE_WALL_THRESHOLD 400   // Side wall detection threshold in mm (no wall if > this)
-#define BASE_SPEED 150            // Base motor speed (0-255)
+#define BASE_SPEED 130            // Base motor speed (0-255) - reduced for better control
 #define TURN_SPEED 200            // Speed when turning to find wall
 #define MAX_CORR 50               // Maximum correction value
 #define Kp 0.2                    // Proportional gain for wall following
@@ -72,6 +72,17 @@ const int FORWARD_AFTER_TURN_DURATION = 400; // Duration to move forward after t
 
 const int RIGHT_TURN_DELAY = 1100;
 const int LEFT_TURN_DELAY = 900;
+
+// Cell-based navigation parameters
+#define CELL_SIZE_MM 300.0              // Standard micromouse cell size (300mm = 30cm)
+#define CELL_SIZE_M 0.30                // Cell size in meters
+#define WHEEL_CIRCUMFERENCE (2.0 * PI * WHEEL_RADIUS)  // Meters per revolution
+#define TICKS_PER_METER (TICKS_PER_REV / WHEEL_CIRCUMFERENCE)
+#define TICKS_PER_CELL (TICKS_PER_METER * CELL_SIZE_M)  // Encoder ticks for one cell
+
+// Intersection detection thresholds
+#define INTERSECTION_DETECT_THRESHOLD 250  // Distance at which to detect intersection (mm)
+#define MIN_CELL_DISTANCE 0.8              // Minimum distance before detecting next intersection (80% of cell)
 
 struct
 {
