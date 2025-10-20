@@ -28,7 +28,7 @@
 #define CMD_KD 'D'
 #define CMD_INFO 'Q'
 #define CMD_TURN 'T'             // Turn by specified angle: T:angle_deg
-#define CMD_CENTERING_ENABLE 'N' // Enable/disable centering: N:1 or N:0
+#define CMD_CENTERING_ENABLE 'N' // Enable/disable centering
 #define CMD_SET_KP_CENTER 'K'    // Set centering Kp: K:value
 
 // Tof Setup
@@ -333,8 +333,9 @@ void processCmd()
     }
     break;
   case CMD_CENTERING_ENABLE:
-    // Enable/disable centering: N:1 or N:0
-    centering_enabled = (value != 0);
+    // Enable/disable centering: N
+    centering_enabled = true;
+    flag_forward_ = true;
     Serial.print("Centering control: ");
     Serial.println(centering_enabled ? "ENABLED" : "DISABLED");
     Serial.println("ACK:N");
@@ -449,11 +450,11 @@ void loopFirmware()
   static unsigned long last_motor_time = 0;
   if (millis() - last_motor_time >= 10)
   {
-    if (centering_enabled == true)
+    if (flag_forward_ == true && centering_enabled == true)
     {
       motor_loop_with_centering();
     }
-    else
+    else if (flag_forward_ == true && centering_enabled == false)
     {
       sendPWM(BASE_FORWARD_SPEED, BASE_FORWARD_SPEED);
     }
