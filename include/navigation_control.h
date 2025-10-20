@@ -19,7 +19,7 @@
 
 // Sensor indices (adjust based on your robot's sensor layout)
 #define SENSOR_LEFT_SIDE 0    // Left side sensor index
-#define SENSOR_RIGHT_SIDE 6   // Right side sensor index
+#define SENSOR_RIGHT_SIDE 2   // Right side sensor index
 
 // Discrete turning parameters
 #define TURN_TOLERANCE_DEG 2.0f      // Acceptable error in degrees
