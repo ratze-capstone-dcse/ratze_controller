@@ -145,6 +145,7 @@ void processCmd()
     // Serial.println("CMD_W: " + String(value2));
     // Serial.println("==========================");
     flag_forward_ = true;
+    centering_enabled = false;
     isMoving = true;
     pid_right.reset();
     pid_left.reset();
