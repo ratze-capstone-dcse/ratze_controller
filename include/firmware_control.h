@@ -450,8 +450,11 @@ void loopFirmware()
   static unsigned long last_motor_time = 0;
   if (millis() - last_motor_time >= 10)
   {
-    if (flag_forward_ == true) {
+    if (centering_enabled == true) {
       motor_loop_with_centering();
+    }
+    else {
+      motor_loop();
     }
     last_motor_time = millis();
   }
