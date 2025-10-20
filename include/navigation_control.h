@@ -433,9 +433,3 @@ void motor_loop_with_centering() {
         }
     }
 }
-
-void motor_loop() {
-    if (flag_forward_ == true) {
-        sendPWM(BASE_FORWARD_SPEED, BASE_FORWARD_SPEED);
-    }
-}

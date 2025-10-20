@@ -174,9 +174,9 @@ void processCmd()
       Serial.println("==========================");
       Serial.println("Executing right turn: 90 degrees");
       Serial.println("==========================");
-      
+
       bool success = discrete_turn(-90.0f);
-      
+
       if (success)
       {
         Serial.println("ACK:R:SUCCESS");
@@ -194,9 +194,9 @@ void processCmd()
       Serial.print(value);
       Serial.println(" degrees");
       Serial.println("==========================");
-      
-      bool success = discrete_turn(-value);  // Negate for right turn
-      
+
+      bool success = discrete_turn(-value); // Negate for right turn
+
       if (success)
       {
         Serial.println("ACK:R:SUCCESS");
@@ -208,7 +208,7 @@ void processCmd()
     }
     isMoving = false;
     break;
-    
+
   case CMD_TURN_LEFT:
     // Discrete turn left command: L or L:angle_deg
     if (value == 0)
@@ -217,9 +217,9 @@ void processCmd()
       Serial.println("==========================");
       Serial.println("Executing left turn: 90 degrees");
       Serial.println("==========================");
-      
+
       bool success = discrete_turn(90.0f);
-      
+
       if (success)
       {
         Serial.println("ACK:L:SUCCESS");
@@ -237,9 +237,9 @@ void processCmd()
       Serial.print(value);
       Serial.println(" degrees");
       Serial.println("==========================");
-      
-      bool success = discrete_turn(value);  // Positive for left turn
-      
+
+      bool success = discrete_turn(value); // Positive for left turn
+
       if (success)
       {
         Serial.println("ACK:L:SUCCESS");
@@ -441,7 +441,6 @@ void loopFirmware()
   static unsigned long last_sensor_time = 0;
   if (millis() - last_sensor_time >= 50)
   { // 20Hz update rate
-    // extract_heading();
     update_imu();
     updateToFReadings();
     last_sensor_time = millis();
@@ -450,11 +449,13 @@ void loopFirmware()
   static unsigned long last_motor_time = 0;
   if (millis() - last_motor_time >= 10)
   {
-    if (centering_enabled == true) {
+    if (centering_enabled == true)
+    {
       motor_loop_with_centering();
     }
-    else {
-      motor_loop();
+    else
+    {
+      sendPWM(BASE_FORWARD_SPEED, BASE_FORWARD_SPEED);
     }
     last_motor_time = millis();
   }
