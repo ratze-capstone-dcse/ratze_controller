@@ -467,3 +467,7 @@ void loopFirmware()
     maze_navigation_update(tof_distances, NUM_SENSORS);
   }
 }
+
+void maze_navigation_update(uint16_t tof_distances[], int num_sensors);
+
+extern uint16_t tof_distances[NUM_SENSORS];

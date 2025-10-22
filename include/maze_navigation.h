@@ -311,23 +311,38 @@ bool is_approaching_intersection() {
 // ============================================================================
 
 void update_sensor_readings(uint16_t tof_distances[], int num_sensors) {
-  // Read raw sensor values (assuming sensor indices: 0=left, 2=right, 5=front)
-  int raw_left = tof_distances[0];
-  int raw_right = tof_distances[2];
-  int raw_front = tof_distances[5];
-  
+  // Sensor arrangement from left to right: 0, 1, 6, 5, 4, 3, 2
+  // Left sensors: 0, 1
+  // Front sensors: 6, 5
+  // Right sensors: 4, 3, 2
+
+  // Read raw sensor values
+  int raw_left_far = tof_distances[0];
+  int raw_left_near = tof_distances[1];
+  int raw_front_left = tof_distances[6];
+  int raw_front_right = tof_distances[5];
+  int raw_right_near = tof_distances[4];
+  int raw_right_mid = tof_distances[3];
+  int raw_right_far = tof_distances[2];
+
+  // Average the front sensors for a more stable front reading
+  int raw_front = (raw_front_left + raw_front_right) / 2;
+
+  // Use the nearest sensor on each side for wall detection
+  int raw_left = raw_left_near;
+  int raw_right = raw_right_near;
+
   // Apply low-pass filter to reduce noise
   navigator.filtered_left = ALPHA * raw_left + (1.0 - ALPHA) * navigator.filtered_left;
   navigator.filtered_right = ALPHA * raw_right + (1.0 - ALPHA) * navigator.filtered_right;
   navigator.raw_front = raw_front;
-  
+
   // Update wall detection flags
-  // Use larger threshold for front wall to stop earlier and avoid collision
-  navigator.has_front_wall = (raw_front > 0 && raw_front < (FRONT_THRESHOLD + 100)); // Extra 50mm safety margin
+  navigator.has_front_wall = (raw_front > 0 && raw_front < (FRONT_THRESHOLD + 100));
   navigator.has_right_wall = (navigator.filtered_right > 0 && navigator.filtered_right < SIDE_WALL_THRESHOLD);
   navigator.has_left_wall = (navigator.filtered_left > 0 && navigator.filtered_left < SIDE_WALL_THRESHOLD);
-  
-  // Debug output (can be enabled/disabled)
+
+  // Debug output
   #ifdef DEBUG_SENSORS
   Serial.print("Sensors - L:");
   Serial.print(navigator.filtered_left);
@@ -348,6 +363,42 @@ void update_sensor_readings(uint16_t tof_distances[], int num_sensors) {
 // DECISION MAKING LOGIC (Right-Hand Rule)
 // ============================================================================
 
+NavigationPriority get_longest_path_priority() {
+    // Sensor arrangement from left to right: 0, 1, 6, 5, 4, 3, 2
+    // Angles (approximate): Left (-90, -60), Front (-30, 30), Right (60, 90)
+    // For simplicity, we can group them:
+    // Left: 0, 1
+    // Front: 6, 5
+    // Right: 4, 3, 2
+
+    float left_dist = (tof_distances[0] + tof_distances[1]) / 2.0;
+    float front_dist = (tof_distances[6] + tof_distances[5]) / 2.0;
+    float right_dist = (tof_distances[4] + tof_distances[3] + tof_distances[2]) / 3.0;
+
+    bool can_go_left = !navigator.has_left_wall;
+    bool can_go_right = !navigator.has_right_wall;
+    bool can_go_forward = !navigator.has_front_wall;
+
+    float max_dist = -1.0;
+    NavigationPriority best_choice = PRIORITY_NONE; // Default if no path is open
+
+    if (can_go_forward) {
+        max_dist = front_dist;
+        best_choice = PRIORITY_MOVE_FORWARD;
+    }
+
+    if (can_go_right && right_dist > max_dist) {
+        max_dist = right_dist;
+        best_choice = PRIORITY_TURN_RIGHT;
+    }
+
+    if (can_go_left && left_dist > max_dist) {
+        best_choice = PRIORITY_TURN_LEFT;
+    }
+
+    return best_choice;
+}
+
 NavigationPriority determine_navigation_priority() {
   // Right-hand rule priority:
   // 1. Turn right if possible (right is open)
@@ -367,24 +418,7 @@ NavigationPriority determine_navigation_priority() {
   Serial.print(" R:");
   Serial.println(can_go_right ? "Open" : "Wall");
   
-  // Priority 2: Go straight
-  if (can_go_forward) {
-    return PRIORITY_MOVE_FORWARD;
-  }
-  
-  // Priority 1: Turn right (right-hand rule)
-  if (can_go_right) {
-    return PRIORITY_TURN_RIGHT;
-  }
-  
-  
-  // Priority 3: Turn left
-  if (can_go_left) {
-    return PRIORITY_TURN_LEFT;
-  }
-  
-  // Priority 4: Dead end - turn around
-  return PRIORITY_TURN_AROUND;
+  return get_longest_path_priority();
 }
 
 // Get decision name for debugging
