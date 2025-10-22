@@ -367,15 +367,16 @@ NavigationPriority determine_navigation_priority() {
   Serial.print(" R:");
   Serial.println(can_go_right ? "Open" : "Wall");
   
+  // Priority 2: Go straight
+  if (can_go_forward) {
+    return PRIORITY_MOVE_FORWARD;
+  }
+  
   // Priority 1: Turn right (right-hand rule)
   if (can_go_right) {
     return PRIORITY_TURN_RIGHT;
   }
   
-  // Priority 2: Go straight
-  if (can_go_forward) {
-    return PRIORITY_MOVE_FORWARD;
-  }
   
   // Priority 3: Turn left
   if (can_go_left) {
@@ -389,8 +390,8 @@ NavigationPriority determine_navigation_priority() {
 // Get decision name for debugging
 const char* decision_name(NavigationPriority p) {
   switch (p) {
-    case PRIORITY_TURN_RIGHT: return "TURN_RIGHT";
     case PRIORITY_MOVE_FORWARD: return "MOVE_FORWARD";
+    case PRIORITY_TURN_RIGHT: return "TURN_RIGHT";
     case PRIORITY_TURN_LEFT: return "TURN_LEFT";
     case PRIORITY_TURN_AROUND: return "TURN_AROUND";
     case PRIORITY_NONE: return "NONE";
@@ -579,10 +580,6 @@ void maze_navigation_update(uint16_t tof_distances[], int num_sensors) {
         navigator.intersection_handled = true;
         
         switch (decision) {
-          case PRIORITY_TURN_RIGHT:
-            navigator.transition_to(NAV_TURN_RIGHT, RIGHT_TURN_DELAY);
-            break;
-            
           case PRIORITY_MOVE_FORWARD:
             // Move forward through intersection
             Serial.println("Continuing forward");
@@ -592,6 +589,11 @@ void maze_navigation_update(uint16_t tof_distances[], int num_sensors) {
             navigator.intersection_handled = false;
             navigator.transition_to(NAV_MOVE_FORWARD_CELL);
             break;
+            
+          case PRIORITY_TURN_RIGHT:
+            navigator.transition_to(NAV_TURN_RIGHT, RIGHT_TURN_DELAY);
+            break;
+            
             
           case PRIORITY_TURN_LEFT:
             navigator.transition_to(NAV_TURN_LEFT, LEFT_TURN_DELAY);
