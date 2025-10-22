@@ -525,7 +525,7 @@ void maze_navigation_update(uint16_t tof_distances[], int num_sensors) {
             Serial.println("mm - backing up!");
             
             // Back up more aggressively
-            sendPWM(-120, -120);
+            sendPWM(-200, -200);
             delay(150);
             execute_stop();
             delay(100);

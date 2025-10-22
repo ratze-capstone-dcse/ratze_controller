@@ -61,8 +61,8 @@ TimerAPI motor_update_timer_(hz_to_ms(50));
 #define ALPHA 0.3                 // Low-pass filter coefficient (0-1, higher = more responsive)
 #define FRONT_THRESHOLD 350       // Front wall detection threshold in mm (increased for safety)
 #define SIDE_WALL_THRESHOLD 400   // Side wall detection threshold in mm (no wall if > this)
-#define BASE_SPEED 130            // Base motor speed (0-255) - reduced for better control
-#define TURN_SPEED 200            // Speed when turning to find wall
+#define BASE_SPEED 150            // Base motor speed (0-255) - reduced for better control
+#define TURN_SPEED 200           // Speed when turning to find wall
 #define MAX_CORR 50               // Maximum correction value
 #define Kp 0.2                    // Proportional gain for wall following
 const int TURN_DELAY = 400;       // 90-degree turn duration in ms
