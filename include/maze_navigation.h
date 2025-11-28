@@ -384,7 +384,7 @@ NavigationPriority determine_navigation_priority() {
   }
   
   // Priority 4: Dead end - turn around
-  return PRIORITY_TURN_AROUND;
+  return PRIORITY_NONE;
 }
 
 // Get decision name for debugging
